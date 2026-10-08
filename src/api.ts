@@ -181,3 +181,7 @@ export async function postJourney(
 }
 
 export const closurePreview = (id: string) => get<import("./types").ClosurePreview>(`/jornadas/${encodeURIComponent(id)}/cierre/previa`);
+
+export const expenseCategories = () => get<import('./expense-model').Category[]>('/categorias-gasto');
+export interface ExpenseRow {id:string;categoriaNombre:string;fecha:string;descripcion:string;medio:string;importe:number;referencia:string|null}
+export const journeyExpenses = (id:string,page:number) => get<{contenido:ExpenseRow[];pagina:number;tamanio:number;hayMas:boolean}>(`/jornadas/${encodeURIComponent(id)}/gastos?pagina=${page}&tamanio=20`);

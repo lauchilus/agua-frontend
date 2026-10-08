@@ -6,8 +6,11 @@ import {
   products,
   postJourney,
   closurePreview,
+  expenseCategories,
 } from "./api";
 import { opening, loading, closing } from "./journey-model";
+import {ExpenseFields} from "./ExpenseFields";
+import {expense,emptyExpense,type Category} from "./expense-model";
 import { money } from "./operations-model";
 import type {
   ClosurePreview,
@@ -18,6 +21,7 @@ import type {
   Producto,
 } from "./types";
 type Body =
+  | ({operacionId:string} & ReturnType<typeof expense>)
   | ({ operacionId: string } & ReturnType<typeof closing>)
   | {
       operacionId: string;
@@ -28,7 +32,7 @@ type Body =
   | { operacionId: string; items: { productoId: string; cantidad: number }[] };
 interface Pending {
   version: 1;
-  kind: "OPEN" | "LOAD" | "CLOSE";
+  kind: "OPEN" | "LOAD" | "CLOSE" | "EXPENSE";
   body: Body;
   jornadaId: string;
   summary: string;
@@ -50,7 +54,7 @@ function read(key: string): { p: Pending | null; error: string } {
     if (
       p.version !== 1 ||
       !p.body?.operacionId ||
-      !["OPEN", "LOAD", "CLOSE"].includes(p.kind) ||
+      !["OPEN", "LOAD", "CLOSE", "EXPENSE"].includes(p.kind) ||
       !["pending", "confirmed", "rejected"].includes(p.status)
     )
       throw new Error();
@@ -76,7 +80,7 @@ export function JourneyActions({
     [storageError, setStorageError] = useState(start.current.error),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
-  const [mode, setMode] = useState<"OPEN" | "LOAD" | "CLOSE" | null>(null),
+  const [mode, setMode] = useState<"OPEN" | "LOAD" | "CLOSE" | "EXPENSE" | null>(null),
     [options, setOptions] = useState<OpeningOptions | null>(null),
     [catalog, setCatalog] = useState<Producto[]>([]),
     [stock, setStock] = useState<FactoryStock[]>([]);
@@ -87,6 +91,7 @@ export function JourneyActions({
     [review, setReview] = useState(false);
   const [preview, setPreview] = useState<ClosurePreview | null>(null),
     [reason, setReason] = useState("");
+  const [categories,setCategories]=useState<Category[]>([]),[draft,setDraft]=useState(emptyExpense);
   const running = useRef(false);
   useEffect(() => {
     setMode(null);
@@ -116,7 +121,7 @@ export function JourneyActions({
     localStorage.setItem(key, JSON.stringify(p));
     setPending(p);
   }
-  async function prepare(kind: "OPEN" | "LOAD" | "CLOSE") {
+  async function prepare(kind: "OPEN" | "LOAD" | "CLOSE" | "EXPENSE") {
     if (busy || running.current) return;
     setWorking(true);
     setError("");
@@ -137,6 +142,9 @@ export function JourneyActions({
           reps = opt.repartidores.filter((r) => !r.ocupado);
         setVan(vans.length === 1 ? vans[0].id : "");
         setRep(reps.length === 1 ? reps[0].id : "");
+      } else if (kind === "EXPENSE") {
+        if (!data || data.jornada.estado !== "ABIERTA") throw new Error("Seleccioná una jornada abierta.");
+        setCategories(await expenseCategories());setDraft(emptyExpense());
       } else if (kind === "CLOSE") {
         if (!data || data.jornada.estado !== "ABIERTA")
           throw new Error("Seleccioná una jornada abierta.");
@@ -189,7 +197,7 @@ export function JourneyActions({
       const path =
         p.kind === "OPEN"
           ? "/jornadas"
-          : `/jornadas/${encodeURIComponent(p.jornadaId)}/${p.kind === "CLOSE" ? "cierre" : "cargas"}`;
+          : `/jornadas/${encodeURIComponent(p.jornadaId)}/${p.kind === "CLOSE" ? "cierre" : p.kind === "EXPENSE" ? "gastos" : "cargas"}`;
       const response = await postJourney(path, p.body);
       if (
         response.id !== p.body.operacionId ||
@@ -206,7 +214,7 @@ export function JourneyActions({
         message:
           p.kind === "OPEN"
             ? "Jornada abierta. Ya podés cargar stock."
-            : p.kind === "CLOSE"
+            : p.kind === "EXPENSE" ? "Gasto registrado. Caja actualizada." : p.kind === "CLOSE"
               ? "Jornada cerrada. Stock devuelto a fábrica y caja registrada."
               : `${response.tipo === "INICIAL" ? "Carga inicial" : "Recarga"} registrada. Stock actualizado.`,
       };
@@ -237,6 +245,11 @@ export function JourneyActions({
     }
   }
   function getBody() {
+    if (mode === "EXPENSE" && data?.jornada.estado === "ABIERTA") {
+      const body=expense(categories,draft);
+      if(body.fecha < data.jornada.fecha || body.fecha > emptyExpense().fecha) throw new Error("La fecha debe estar entre el inicio de la jornada y hoy.");
+      return body;
+    }
     if (mode === "CLOSE" && preview && data?.jornada.id === preview.jornada.id)
       return closing(preview, amount, reason);
     if (mode === "OPEN" && options) return opening(options, van, rep, amount);
@@ -272,7 +285,7 @@ export function JourneyActions({
       const summary =
         mode === "OPEN"
           ? `${options!.camionetas.find((c) => c.id === van)?.nombre} · ${options!.repartidores.find((r) => r.id === rep)?.nombre} · Fondo ${money(Number(amount.replace(",", ".")))}`
-          : mode === "CLOSE"
+          : mode === "EXPENSE" ? `${categories.find(c=>c.id===draft.categoriaId)?.nombre} · ${draft.fecha} · ${draft.medio} · ${money(Number(draft.importe.replace(",", ".")))} · ${draft.descripcion}` : mode === "CLOSE"
             ? `Cierre · Efectivo contado ${money(Number(amount.replace(",", ".")))} · ${reason || "Sin diferencia"}`
             : "items" in body
               ? body.items
@@ -299,7 +312,7 @@ export function JourneyActions({
   return (
     <section class="panel journey-actions">
       <div class="section-heading">
-        <h2>Preparar el reparto</h2>
+        <h2>Operaciones de jornada</h2>
         {!pending && !storageError && (
           <div class="actions">
             <button
@@ -309,6 +322,7 @@ export function JourneyActions({
             >
               Abrir jornada
             </button>
+            {data?.jornada.estado === "ABIERTA" && <button class="secondary" disabled={busy} onClick={()=>void prepare("EXPENSE")}>Registrar gasto</button>}
             {data?.jornada.estado === "ABIERTA" && (
               <button
                 class="secondary"
@@ -381,9 +395,9 @@ export function JourneyActions({
                 ? "Nueva jornada"
                 : mode === "CLOSE"
                   ? "Cierre de jornada"
-                  : "Stock desde fábrica"}
+                  : mode === "EXPENSE" ? "Gasto de jornada" : "Stock desde fábrica"}
             </h3>
-            {mode === "OPEN" && options ? (
+            {mode === "EXPENSE" ? <ExpenseFields categories={categories} draft={draft} onChange={setDraft} review={review}/> : mode === "OPEN" && options ? (
               <>
                 <label>
                   Camioneta
@@ -544,7 +558,7 @@ export function JourneyActions({
                   ? "se abrirá la jornada con el fondo indicado"
                   : mode === "CLOSE"
                     ? "se cerrará la jornada y se devolverá todo el stock indicado a fábrica"
-                    : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
+                    : mode === "EXPENSE" ? "se registrará el gasto en el medio de pago indicado" : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
                 .
               </p>
             )}
@@ -578,7 +592,7 @@ export function JourneyActions({
                       ? "apertura"
                       : mode === "CLOSE"
                         ? "cierre"
-                        : "carga"}
+                        : mode === "EXPENSE" ? "gasto" : "carga"}
                   </button>
                 </>
               ) : (
@@ -588,7 +602,7 @@ export function JourneyActions({
                     ? "apertura"
                     : mode === "CLOSE"
                       ? "cierre"
-                      : "carga"}
+                      : mode === "EXPENSE" ? "gasto" : "carga"}
                 </button>
               )}
             </div>

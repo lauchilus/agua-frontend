@@ -75,6 +75,9 @@ export interface Snapshot {
   }[];
 }
 export interface Caja {
+  egresosEfectivo?:number;
+  egresosTransferencia?:number;
+  egresosMercadoPago?:number;
   estado: string;
   efectivoInicial: number;
   totalCobrado: number;

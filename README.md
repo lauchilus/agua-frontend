@@ -1,3 +1,7 @@
+# Versión 0.8 · Gastos de jornada
+
+Registro con categoría, fecha, medio e importe. Consulta paginada y egresos por medio. Solo frontend; ver ACTUALIZAR_GASTOS.md en el ZIP.
+
 # Versión 0.7 · Bolsas de 12 y 20 litros
 
 Actualizar primero backend y migración V14 del paquete. La carga de camioneta admite solo bidones, máquinas y copas. La producción consume la bolsa de su capacidad. Ver ACTUALIZAR_BOLSAS.md.

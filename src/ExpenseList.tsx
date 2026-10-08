@@ -1,0 +1,8 @@
+import {useRef,useState} from 'preact/hooks';
+import {journeyExpenses,type ExpenseRow} from './api';
+import {money} from './operations-model';
+export function ExpenseList({id}:{id:string}){
+ const [rows,setRows]=useState<ExpenseRow[]>([]),[page,setPage]=useState(0),[more,setMore]=useState(false),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');const running=useRef(false);
+ async function load(p:number){if(running.current)return;running.current=true;setBusy(true);setError('');try{const r=await journeyExpenses(id,p);if(!Array.isArray(r.contenido))throw Error('No se pudo interpretar el listado de gastos.');setRows(r.contenido);setPage(r.pagina);setMore(r.hayMas);setLoaded(true);}catch(e){setError((e as Error).message);}finally{running.current=false;setBusy(false);}}
+ return <section class="panel"><div class="section-heading"><h2>Gastos de la jornada</h2><button class="secondary" disabled={busy} onClick={()=>void load(0)}>{busy?'Consultando…':loaded?'Actualizar gastos':'Consultar gastos'}</button></div>{error&&<p class="error" role="alert">{error}</p>}{loaded&&<>{rows.length?rows.map(g=><article class="abono" key={g.id}><div class="row"><b>{g.categoriaNombre}</b><b>{money(g.importe)}</b></div><p>{g.descripcion}</p><small>{g.fecha.split('-').reverse().join('/')} · {g.medio.replaceAll('_',' ')}{g.referencia&&` · ${g.referencia}`}</small></article>):<p class="muted">Sin gastos registrados.</p>}<div class="actions"><button class="secondary" disabled={busy||page===0} onClick={()=>void load(page-1)}>Gastos anteriores</button><span>Página {page+1}</span><button class="secondary" disabled={busy||!more} onClick={()=>void load(page+1)}>Más gastos</button></div></>}</section>;
+}

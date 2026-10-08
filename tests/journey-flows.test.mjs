@@ -16,6 +16,7 @@ async function setup({
   lost = false,
   conflict = false,
   refreshFailure = false,
+  expenseMedium = "EFECTIVO",
 } = {}) {
   const dom = new JSDOM('<div id="app"></div>', {
       url: "http://localhost:5173",
@@ -30,6 +31,7 @@ async function setup({
     first = true,
     refreshFail = false,
     stock = 0, closed = false;
+  const spent={EFECTIVO:0,TRANSFERENCIA:0,MERCADO_PAGO:0};
   const bodies = [],
     ledger = new Map(),
     key = "agua.jornada.pending.v1.admin";
@@ -102,6 +104,8 @@ async function setup({
           efectivoInicialSugerido: 24000,
         }),
       );
+    if (url.endsWith("/categorias-gasto")) return new Response(JSON.stringify([{id:"cat",nombre:"Nafta",activo:true,version:0}]));
+    if (url.includes("/gastos?")) return new Response(JSON.stringify({contenido:[],pagina:0,hayMas:false}));
     if (url.endsWith("/productos"))
       return new Response(JSON.stringify([product, {id:"bag",codigo:"BOLSA_20",nombre:"Bolsa de 20 litros",tipo:"INSUMO"}, {id:"cup",codigo:"COPA",nombre:"Copa",tipo:"COPA"}, {id:"machine",codigo:"MAQUINA",nombre:"Máquina",tipo:"MAQUINA"}]));
     if (url.endsWith("/stock/fabrica"))
@@ -130,7 +134,10 @@ async function setup({
           status: 409,
         });
       if (!ledger.has(body.operacionId)) {
-        if (url.endsWith("/cierre")) {
+        if (url.endsWith("/gastos")) {
+          spent[body.medio]+=body.importe;
+          ledger.set(body.operacionId,{id:body.operacionId,jornadaId:journey});
+        } else if (url.endsWith("/cierre")) {
           closed = true; stock = 0;
           ledger.set(body.operacionId, {id: body.operacionId, jornadaId: journey});
         } else if (url.endsWith("/cargas")) {
@@ -164,8 +171,9 @@ async function setup({
         estado: closed ? "CERRADA" : "ABIERTA",
         efectivoInicial: 24000,
         totalCobrado: 0,
-        totalGastado: 0,
-        efectivoEsperado: 24000,
+        totalGastado: Object.values(spent).reduce((a,b)=>a+b,0),
+        egresosEfectivo:spent.EFECTIVO,egresosTransferencia:spent.TRANSFERENCIA,egresosMercadoPago:spent.MERCADO_PAGO,
+        efectivoEsperado: 24000-spent.EFECTIVO,
         ingresosEfectivo: 0,
         ingresosTransferencia: 0,
         ingresosMercadoPago: 0,
@@ -200,8 +208,13 @@ async function setup({
     await wait();
   }
   async function confirm(kind) {
-    click(kind === "OPEN" ? "Abrir jornada" : kind === "CLOSE" ? "Cerrar jornada" : "Cargar / recargar stock");
+    click(kind === "OPEN" ? "Abrir jornada" : kind === "CLOSE" ? "Cerrar jornada" : kind === "EXPENSE" ? "Registrar gasto" : "Cargar / recargar stock");
     await wait();
+    if (kind === "EXPENSE") {
+      const cat=w.document.querySelector('[aria-label="Categoría del gasto"]');cat.value="cat";cat.dispatchEvent(new w.Event("change",{bubbles:true}));
+      await wait();input('[aria-label="Descripción del gasto"]',"Nafta prueba");await wait();input('[aria-label="Importe del gasto"]',"2000");await wait();
+      const medio=w.document.querySelector('[aria-label="Medio del gasto"]');medio.value=expenseMedium;medio.dispatchEvent(new w.Event("change",{bubbles:true}));await wait();
+    }
     if (kind === "CLOSE") { input('input[aria-label="Efectivo contado"]', "24000"); await wait(); }
     if (kind === "LOAD") {
       input('input[aria-label="Cantidad de Bidón de 12 litros"]', "2");
@@ -213,7 +226,7 @@ async function setup({
         new w.Event("submit", { bubbles: true, cancelable: true }),
       );
     await wait();
-    click(kind === "OPEN" ? "Confirmar apertura" : kind === "CLOSE" ? "Confirmar cierre" : "Confirmar carga");
+    click(kind === "OPEN" ? "Confirmar apertura" : kind === "CLOSE" ? "Confirmar cierre" : kind === "EXPENSE" ? "Confirmar gasto" : "Confirmar carga");
     await wait();
     await wait();
   }
@@ -222,6 +235,7 @@ async function setup({
     w,
     bodies,
     ledger,
+    spent,
     key,
     confirm,
     click,
@@ -332,3 +346,7 @@ test("cierre confirmado con refresco fallido solo vuelve a consultar", async () 
 });
 
 test("carga oculta insumos y conserva copas y máquinas",async()=>{const x=await setup({active:true});try{x.click("Cargar / recargar stock");await wait();const labels=[...x.w.document.querySelectorAll(".load-row")].map(x=>x.textContent).join(" ");assert.match(labels,/Copa/);assert.match(labels,/Máquina/);assert.match(labels,/Bidón/);assert.doesNotMatch(labels,/Bolsa/);}finally{x.dom.window.close();}});
+
+test("gasto perdido se reintenta una vez con mismo UUID y caja correcta",async()=>{const x=await setup({active:true,lost:true});try{await x.confirm("EXPENSE");assert.equal(x.spent.EFECTIVO,2000);x.click("Reintentar solicitud de jornada");await wait();await wait();assert.equal(x.bodies[0],x.bodies[1]);assert.equal(x.spent.EFECTIVO,2000);assert.equal(x.w.localStorage.getItem(x.key),null);assert.match(x.text(),/Gasto registrado/);assert.match(x.text(),/22[.]000/);}finally{x.dom.window.close();}});
+test("transferencia y Mercado Pago conservan efectivo esperado",async()=>{for(const medio of ["TRANSFERENCIA","MERCADO_PAGO"]){const x=await setup({active:true,expenseMedium:medio});try{await x.confirm("EXPENSE");assert.equal(x.spent[medio],2000);assert.equal(x.spent.EFECTIVO,0);assert.match(x.text(),/24[.]000/);}finally{x.dom.window.close();}}});
+test("gasto rechazado no cambia caja",async()=>{const x=await setup({active:true,conflict:true});try{await x.confirm("EXPENSE");assert.equal(x.spent.EFECTIVO,0);assert.equal(JSON.parse(x.w.localStorage.getItem(x.key)).status,"rejected");}finally{x.dom.window.close();}});

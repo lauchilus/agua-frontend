@@ -5,6 +5,7 @@ import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
 import { JourneyPicker } from "./JourneyPicker";
 import { Operations } from "./Operations";
+import { ExpenseList } from "./ExpenseList";
 import { Factory } from "./Factory";
 import { JourneyActions } from "./JourneyActions";
 const money = (n: number) =>
@@ -331,6 +332,9 @@ function App() {
                       </div>
                     </section>
                     <section class="panel">
+                      <h2>Gastos por medio</h2>
+                      {[["Efectivo",caja!.egresosEfectivo],["Transferencia",caja!.egresosTransferencia],["Mercado Pago",caja!.egresosMercadoPago]].map(([label,n])=><div class="row" key={String(label)}><span>{label}</span><b>{money(Number(n ?? 0))}</b></div>)}
+                      <p class="muted">Solo el gasto en efectivo reduce el efectivo esperado.</p>
                       <h2>Datos disponibles</h2>
                       <div class="row">
                         <span>Clientes compartidos</span>
@@ -352,6 +356,7 @@ function App() {
                       </button>
                     </section>
                   </div>
+                  <ExpenseList key={data.jornada.id+data.generadoEn} id={data.jornada.id}/>
                   <p class="notice">
                     Para registrar entregas o cobros, elegí un cliente. El
                     trabajo sin conexión todavía no está habilitado.
@@ -547,7 +552,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.7</span>
+        AGUA · Reparto y administración <span>Versión 0.8</span>
       </footer>
     </div>
   );
