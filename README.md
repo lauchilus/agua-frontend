@@ -1,3 +1,7 @@
+# Versión 0.6 · Stock de fábrica
+
+Panel exclusivo del administrador con consulta, búsqueda, ajustes con motivo y producción. Actualizar primero el backend incluido para proteger los reintentos de ajustes. Consultar ACTUALIZAR_STOCK_FABRICA.md en el ZIP.
+
 # Actualización 0.5: cierre de jornada
 
 Esta actualización solo modifica el frontend. Usa los endpoints de cierre ya existentes; no requiere cambios de backend ni migraciones.

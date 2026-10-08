@@ -5,6 +5,7 @@ import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
 import { JourneyPicker } from "./JourneyPicker";
 import { Operations } from "./Operations";
+import { Factory } from "./Factory";
 import { JourneyActions } from "./JourneyActions";
 const money = (n: number) =>
   new Intl.NumberFormat("es-AR", {
@@ -202,6 +203,14 @@ function App() {
             </div>
             <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
+          {user.roles.includes("ROLE_ADMIN") && (
+            <Factory
+              key={user.username}
+              username={user.username}
+              busy={busy}
+              setWorking={setBusy}
+            />
+          )}
           <JourneyActions
             key={user.username}
             user={user}
@@ -538,7 +547,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.5</span>
+        AGUA · Reparto y administración <span>Versión 0.6</span>
       </footer>
     </div>
   );

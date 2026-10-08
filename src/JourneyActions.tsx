@@ -85,7 +85,8 @@ export function JourneyActions({
     [amount, setAmount] = useState("24000"),
     [quantities, setQuantities] = useState<Record<string, string>>({}),
     [review, setReview] = useState(false);
-  const [preview, setPreview] = useState<ClosurePreview | null>(null), [reason, setReason] = useState("");
+  const [preview, setPreview] = useState<ClosurePreview | null>(null),
+    [reason, setReason] = useState("");
   const running = useRef(false);
   useEffect(() => {
     setMode(null);
@@ -124,6 +125,8 @@ export function JourneyActions({
     setReview(false);
     try {
       if (pending) throw new Error("Primero resolvé la solicitud pendiente.");
+      if (localStorage.getItem(`agua.factory.pending.v1.${user.username}`))
+        throw new Error("Primero resolvé el movimiento de fábrica pendiente.");
       if (localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
       if (kind === "OPEN") {
@@ -135,10 +138,14 @@ export function JourneyActions({
         setVan(vans.length === 1 ? vans[0].id : "");
         setRep(reps.length === 1 ? reps[0].id : "");
       } else if (kind === "CLOSE") {
-        if (!data || data.jornada.estado !== "ABIERTA") throw new Error("Seleccioná una jornada abierta.");
+        if (!data || data.jornada.estado !== "ABIERTA")
+          throw new Error("Seleccioná una jornada abierta.");
         const prev = await closurePreview(data.jornada.id);
-        if (prev.jornada.estado !== "ABIERTA") throw new Error("La jornada ya está cerrada.");
-        setPreview(prev); setAmount(""); setReason("");
+        if (prev.jornada.estado !== "ABIERTA")
+          throw new Error("La jornada ya está cerrada.");
+        setPreview(prev);
+        setAmount("");
+        setReason("");
       } else {
         if (!data || data.jornada.estado !== "ABIERTA")
           throw new Error("Seleccioná una jornada abierta.");
@@ -199,7 +206,9 @@ export function JourneyActions({
         message:
           p.kind === "OPEN"
             ? "Jornada abierta. Ya podés cargar stock."
-            : p.kind === "CLOSE" ? "Jornada cerrada. Stock devuelto a fábrica y caja registrada." : `${response.tipo === "INICIAL" ? "Carga inicial" : "Recarga"} registrada. Stock actualizado.`,
+            : p.kind === "CLOSE"
+              ? "Jornada cerrada. Stock devuelto a fábrica y caja registrada."
+              : `${response.tipo === "INICIAL" ? "Carga inicial" : "Recarga"} registrada. Stock actualizado.`,
       };
       save(done);
       await clear(done);
@@ -228,7 +237,8 @@ export function JourneyActions({
     }
   }
   function getBody() {
-    if (mode === "CLOSE" && preview && data?.jornada.id === preview.jornada.id) return closing(preview, amount, reason);
+    if (mode === "CLOSE" && preview && data?.jornada.id === preview.jornada.id)
+      return closing(preview, amount, reason);
     if (mode === "OPEN" && options) return opening(options, van, rep, amount);
     if (mode === "LOAD" && data?.jornada.estado === "ABIERTA")
       return { items: loading(catalog, stock, quantities) };
@@ -256,18 +266,22 @@ export function JourneyActions({
       }
       if (localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
+      if (localStorage.getItem(`agua.factory.pending.v1.${user.username}`))
+        throw new Error("Primero resolvé el movimiento de fábrica pendiente.");
       const body = { ...getBody(), operacionId: crypto.randomUUID() } as Body;
       const summary =
         mode === "OPEN"
           ? `${options!.camionetas.find((c) => c.id === van)?.nombre} · ${options!.repartidores.find((r) => r.id === rep)?.nombre} · Fondo ${money(Number(amount.replace(",", ".")))}`
-          : mode === "CLOSE" ? `Cierre · Efectivo contado ${money(Number(amount.replace(",", ".")))} · ${reason || "Sin diferencia"}` : "items" in body
-            ? body.items
-                .map(
-                  (i) =>
-                    `${catalog.find((p) => p.id === i.productoId)?.nombre}: ${i.cantidad}`,
-                )
-                .join(" · ")
-            : "";
+          : mode === "CLOSE"
+            ? `Cierre · Efectivo contado ${money(Number(amount.replace(",", ".")))} · ${reason || "Sin diferencia"}`
+            : "items" in body
+              ? body.items
+                  .map(
+                    (i) =>
+                      `${catalog.find((p) => p.id === i.productoId)?.nombre}: ${i.cantidad}`,
+                  )
+                  .join(" · ")
+              : "";
       const p: Pending = {
         version: 1,
         kind: mode,
@@ -295,7 +309,15 @@ export function JourneyActions({
             >
               Abrir jornada
             </button>
-            {data?.jornada.estado === "ABIERTA" && <button class="secondary" disabled={busy} onClick={() => void prepare("CLOSE")}>Cerrar jornada</button>}
+            {data?.jornada.estado === "ABIERTA" && (
+              <button
+                class="secondary"
+                disabled={busy}
+                onClick={() => void prepare("CLOSE")}
+              >
+                Cerrar jornada
+              </button>
+            )}
             {data?.jornada.estado === "ABIERTA" && (
               <button
                 class="secondary"
@@ -354,7 +376,13 @@ export function JourneyActions({
       ) : mode && !storageError ? (
         <form onSubmit={reviewOperation}>
           <fieldset disabled={busy} class="form-wrapper">
-            <h3>{mode === "OPEN" ? "Nueva jornada" : mode === "CLOSE" ? "Cierre de jornada" : "Stock desde fábrica"}</h3>
+            <h3>
+              {mode === "OPEN"
+                ? "Nueva jornada"
+                : mode === "CLOSE"
+                  ? "Cierre de jornada"
+                  : "Stock desde fábrica"}
+            </h3>
             {mode === "OPEN" && options ? (
               <>
                 <label>
@@ -413,14 +441,60 @@ export function JourneyActions({
               </>
             ) : mode === "CLOSE" && preview ? (
               <>
-                <p>Jornada del {preview.jornada.fecha.split("-").reverse().join("/")}</p>
-                <p>Efectivo esperado: <strong>{money(preview.caja.efectivoEsperado)}</strong></p>
-                <label>Efectivo contado<input aria-label="Efectivo contado" inputMode="decimal" value={amount} disabled={review} onInput={e => setAmount(e.currentTarget.value)} /></label>
-                <p>Diferencia (contado menos esperado): <strong>{/^\d+([.,]\d{1,2})?$/.test(amount.trim()) ? money(Number(amount.replace(",", ".")) - preview.caja.efectivoEsperado) : "—"}</strong></p>
-                <label>Motivo de la diferencia<textarea aria-label="Motivo de la diferencia" maxLength={500} value={reason} disabled={review} onInput={e => setReason(e.currentTarget.value)} /></label>
+                <p>
+                  Jornada del{" "}
+                  {preview.jornada.fecha.split("-").reverse().join("/")}
+                </p>
+                <p>
+                  Efectivo esperado:{" "}
+                  <strong>{money(preview.caja.efectivoEsperado)}</strong>
+                </p>
+                <label>
+                  Efectivo contado
+                  <input
+                    aria-label="Efectivo contado"
+                    inputMode="decimal"
+                    value={amount}
+                    disabled={review}
+                    onInput={(e) => setAmount(e.currentTarget.value)}
+                  />
+                </label>
+                <p>
+                  Diferencia (contado menos esperado):{" "}
+                  <strong>
+                    {/^\d+([.,]\d{1,2})?$/.test(amount.trim())
+                      ? money(
+                          Number(amount.replace(",", ".")) -
+                            preview.caja.efectivoEsperado,
+                        )
+                      : "—"}
+                  </strong>
+                </p>
+                <label>
+                  Motivo de la diferencia
+                  <textarea
+                    aria-label="Motivo de la diferencia"
+                    maxLength={500}
+                    value={reason}
+                    disabled={review}
+                    onInput={(e) => setReason(e.currentTarget.value)}
+                  />
+                </label>
                 <h4>Stock a devolver a fábrica</h4>
-                {preview.stockADevolver.length ? preview.stockADevolver.map(s => <p key={s.productoId + s.estado}>{s.nombre} · {s.estado}: <strong>{s.cantidad}</strong></p>) : <p>No queda stock para devolver.</p>}
-                <p class="muted">Verificá físicamente estas cantidades. El cierre devuelve todo el stock y no permite registrar nuevos movimientos en esta jornada.</p>
+                {preview.stockADevolver.length ? (
+                  preview.stockADevolver.map((s) => (
+                    <p key={s.productoId + s.estado}>
+                      {s.nombre} · {s.estado}: <strong>{s.cantidad}</strong>
+                    </p>
+                  ))
+                ) : (
+                  <p>No queda stock para devolver.</p>
+                )}
+                <p class="muted">
+                  Verificá físicamente estas cantidades. El cierre devuelve todo
+                  el stock y no permite registrar nuevos movimientos en esta
+                  jornada.
+                </p>
               </>
             ) : (
               <>
@@ -468,7 +542,9 @@ export function JourneyActions({
                 Revisá los datos. Al confirmar{" "}
                 {mode === "OPEN"
                   ? "se abrirá la jornada con el fondo indicado"
-                  : mode === "CLOSE" ? "se cerrará la jornada y se devolverá todo el stock indicado a fábrica" : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
+                  : mode === "CLOSE"
+                    ? "se cerrará la jornada y se devolverá todo el stock indicado a fábrica"
+                    : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
                 .
               </p>
             )}
@@ -497,12 +573,22 @@ export function JourneyActions({
                     class="primary"
                     onClick={() => void confirm()}
                   >
-                    Confirmar {mode === "OPEN" ? "apertura" : mode === "CLOSE" ? "cierre" : "carga"}
+                    Confirmar{" "}
+                    {mode === "OPEN"
+                      ? "apertura"
+                      : mode === "CLOSE"
+                        ? "cierre"
+                        : "carga"}
                   </button>
                 </>
               ) : (
                 <button class="primary">
-                  Revisar {mode === "OPEN" ? "apertura" : mode === "CLOSE" ? "cierre" : "carga"}
+                  Revisar{" "}
+                  {mode === "OPEN"
+                    ? "apertura"
+                    : mode === "CLOSE"
+                      ? "cierre"
+                      : "carga"}
                 </button>
               )}
             </div>
