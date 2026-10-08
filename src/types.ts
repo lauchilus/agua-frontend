@@ -116,3 +116,5 @@ export interface FactoryStock {
   estado: string;
   cantidad: number;
 }
+
+export interface ClosurePreview { jornada: Snapshot["jornada"]; caja: Caja; stockADevolver: FactoryStock[]; }

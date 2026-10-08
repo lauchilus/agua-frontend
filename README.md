@@ -1,3 +1,12 @@
+# Actualización 0.5: cierre de jornada
+
+Esta actualización solo modifica el frontend. Usa los endpoints de cierre ya existentes; no requiere cambios de backend ni migraciones.
+
+
+Consultar ACTUALIZAR_CIERRE.md incluido en el paquete para instalación y pruebas.
+
+---
+
 # AGUA · Frontend 0.4 · Apertura, cargas, entregas y cobros
 
 Preact + TypeScript + Vite. Requiere el backend existente con sincronización, datos-offline y listado de jornadas. Esta actualización requiere el nuevo endpoint de opciones de apertura incluido en backend/src del ZIP. No requiere migraciones. Actualizar y reiniciar el backend antes de probar el frontend.

@@ -52,3 +52,12 @@ export function loading(
     throw new Error("Podés cargar hasta 100 productos por operación.");
   return items;
 }
+
+export function closing(preview: import("./types").ClosurePreview, amount: string, reason: string) {
+  if (preview.jornada.estado !== "ABIERTA") throw new Error("La jornada ya está cerrada.");
+  const counted = cents(amount), expected = Math.round(preview.caja.efectivoEsperado * 100);
+  const motivo = reason.trim();
+  if (counted !== expected && !motivo) throw new Error("Indicá el motivo de la diferencia de efectivo.");
+  if (motivo.length > 500) throw new Error("El motivo admite hasta 500 caracteres.");
+  return { efectivoContado: counted / 100, motivoDiferencia: motivo || null, devoluciones: preview.stockADevolver.filter(s => s.cantidad > 0).map(({productoId, estado, cantidad}) => ({productoId, estado, cantidad})) };
+}

@@ -179,3 +179,5 @@ export async function postJourney(
   }
   return response.json() as Promise<JourneyMutationResult>;
 }
+
+export const closurePreview = (id: string) => get<import("./types").ClosurePreview>(`/jornadas/${encodeURIComponent(id)}/cierre/previa`);

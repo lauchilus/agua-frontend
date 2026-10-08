@@ -5,10 +5,12 @@ import {
   factoryStock,
   products,
   postJourney,
+  closurePreview,
 } from "./api";
-import { opening, loading } from "./journey-model";
+import { opening, loading, closing } from "./journey-model";
 import { money } from "./operations-model";
 import type {
+  ClosurePreview,
   User,
   Snapshot,
   OpeningOptions,
@@ -16,6 +18,7 @@ import type {
   Producto,
 } from "./types";
 type Body =
+  | ({ operacionId: string } & ReturnType<typeof closing>)
   | {
       operacionId: string;
       camionetaId: string;
@@ -25,7 +28,7 @@ type Body =
   | { operacionId: string; items: { productoId: string; cantidad: number }[] };
 interface Pending {
   version: 1;
-  kind: "OPEN" | "LOAD";
+  kind: "OPEN" | "LOAD" | "CLOSE";
   body: Body;
   jornadaId: string;
   summary: string;
@@ -47,7 +50,7 @@ function read(key: string): { p: Pending | null; error: string } {
     if (
       p.version !== 1 ||
       !p.body?.operacionId ||
-      !["OPEN", "LOAD"].includes(p.kind) ||
+      !["OPEN", "LOAD", "CLOSE"].includes(p.kind) ||
       !["pending", "confirmed", "rejected"].includes(p.status)
     )
       throw new Error();
@@ -73,7 +76,7 @@ export function JourneyActions({
     [storageError, setStorageError] = useState(start.current.error),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
-  const [mode, setMode] = useState<"OPEN" | "LOAD" | null>(null),
+  const [mode, setMode] = useState<"OPEN" | "LOAD" | "CLOSE" | null>(null),
     [options, setOptions] = useState<OpeningOptions | null>(null),
     [catalog, setCatalog] = useState<Producto[]>([]),
     [stock, setStock] = useState<FactoryStock[]>([]);
@@ -82,6 +85,7 @@ export function JourneyActions({
     [amount, setAmount] = useState("24000"),
     [quantities, setQuantities] = useState<Record<string, string>>({}),
     [review, setReview] = useState(false);
+  const [preview, setPreview] = useState<ClosurePreview | null>(null), [reason, setReason] = useState("");
   const running = useRef(false);
   useEffect(() => {
     setMode(null);
@@ -111,7 +115,7 @@ export function JourneyActions({
     localStorage.setItem(key, JSON.stringify(p));
     setPending(p);
   }
-  async function prepare(kind: "OPEN" | "LOAD") {
+  async function prepare(kind: "OPEN" | "LOAD" | "CLOSE") {
     if (busy || running.current) return;
     setWorking(true);
     setError("");
@@ -130,6 +134,11 @@ export function JourneyActions({
           reps = opt.repartidores.filter((r) => !r.ocupado);
         setVan(vans.length === 1 ? vans[0].id : "");
         setRep(reps.length === 1 ? reps[0].id : "");
+      } else if (kind === "CLOSE") {
+        if (!data || data.jornada.estado !== "ABIERTA") throw new Error("Seleccioná una jornada abierta.");
+        const prev = await closurePreview(data.jornada.id);
+        if (prev.jornada.estado !== "ABIERTA") throw new Error("La jornada ya está cerrada.");
+        setPreview(prev); setAmount(""); setReason("");
       } else {
         if (!data || data.jornada.estado !== "ABIERTA")
           throw new Error("Seleccioná una jornada abierta.");
@@ -173,11 +182,11 @@ export function JourneyActions({
       const path =
         p.kind === "OPEN"
           ? "/jornadas"
-          : `/jornadas/${encodeURIComponent(p.jornadaId)}/cargas`;
+          : `/jornadas/${encodeURIComponent(p.jornadaId)}/${p.kind === "CLOSE" ? "cierre" : "cargas"}`;
       const response = await postJourney(path, p.body);
       if (
         response.id !== p.body.operacionId ||
-        (p.kind === "LOAD" && response.jornadaId !== p.jornadaId)
+        (p.kind !== "OPEN" && response.jornadaId !== p.jornadaId)
       )
         throw new Error(
           "Respuesta inesperada. Conservamos la solicitud para verificarla mediante reintento.",
@@ -190,7 +199,7 @@ export function JourneyActions({
         message:
           p.kind === "OPEN"
             ? "Jornada abierta. Ya podés cargar stock."
-            : `${response.tipo === "INICIAL" ? "Carga inicial" : "Recarga"} registrada. Stock actualizado.`,
+            : p.kind === "CLOSE" ? "Jornada cerrada. Stock devuelto a fábrica y caja registrada." : `${response.tipo === "INICIAL" ? "Carga inicial" : "Recarga"} registrada. Stock actualizado.`,
       };
       save(done);
       await clear(done);
@@ -218,9 +227,8 @@ export function JourneyActions({
       setWorking(false);
     }
   }
-  function getBody():
-    | Omit<Extract<Body, { camionetaId: string }>, "operacionId">
-    | { items: { productoId: string; cantidad: number }[] } {
+  function getBody() {
+    if (mode === "CLOSE" && preview && data?.jornada.id === preview.jornada.id) return closing(preview, amount, reason);
     if (mode === "OPEN" && options) return opening(options, van, rep, amount);
     if (mode === "LOAD" && data?.jornada.estado === "ABIERTA")
       return { items: loading(catalog, stock, quantities) };
@@ -252,7 +260,7 @@ export function JourneyActions({
       const summary =
         mode === "OPEN"
           ? `${options!.camionetas.find((c) => c.id === van)?.nombre} · ${options!.repartidores.find((r) => r.id === rep)?.nombre} · Fondo ${money(Number(amount.replace(",", ".")))}`
-          : "items" in body
+          : mode === "CLOSE" ? `Cierre · Efectivo contado ${money(Number(amount.replace(",", ".")))} · ${reason || "Sin diferencia"}` : "items" in body
             ? body.items
                 .map(
                   (i) =>
@@ -287,6 +295,7 @@ export function JourneyActions({
             >
               Abrir jornada
             </button>
+            {data?.jornada.estado === "ABIERTA" && <button class="secondary" disabled={busy} onClick={() => void prepare("CLOSE")}>Cerrar jornada</button>}
             {data?.jornada.estado === "ABIERTA" && (
               <button
                 class="secondary"
@@ -345,7 +354,7 @@ export function JourneyActions({
       ) : mode && !storageError ? (
         <form onSubmit={reviewOperation}>
           <fieldset disabled={busy} class="form-wrapper">
-            <h3>{mode === "OPEN" ? "Nueva jornada" : "Stock desde fábrica"}</h3>
+            <h3>{mode === "OPEN" ? "Nueva jornada" : mode === "CLOSE" ? "Cierre de jornada" : "Stock desde fábrica"}</h3>
             {mode === "OPEN" && options ? (
               <>
                 <label>
@@ -402,6 +411,17 @@ export function JourneyActions({
                   servidor.
                 </p>
               </>
+            ) : mode === "CLOSE" && preview ? (
+              <>
+                <p>Jornada del {preview.jornada.fecha.split("-").reverse().join("/")}</p>
+                <p>Efectivo esperado: <strong>{money(preview.caja.efectivoEsperado)}</strong></p>
+                <label>Efectivo contado<input aria-label="Efectivo contado" inputMode="decimal" value={amount} disabled={review} onInput={e => setAmount(e.currentTarget.value)} /></label>
+                <p>Diferencia (contado menos esperado): <strong>{/^\d+([.,]\d{1,2})?$/.test(amount.trim()) ? money(Number(amount.replace(",", ".")) - preview.caja.efectivoEsperado) : "—"}</strong></p>
+                <label>Motivo de la diferencia<textarea aria-label="Motivo de la diferencia" maxLength={500} value={reason} disabled={review} onInput={e => setReason(e.currentTarget.value)} /></label>
+                <h4>Stock a devolver a fábrica</h4>
+                {preview.stockADevolver.length ? preview.stockADevolver.map(s => <p key={s.productoId + s.estado}>{s.nombre} · {s.estado}: <strong>{s.cantidad}</strong></p>) : <p>No queda stock para devolver.</p>}
+                <p class="muted">Verificá físicamente estas cantidades. El cierre devuelve todo el stock y no permite registrar nuevos movimientos en esta jornada.</p>
+              </>
             ) : (
               <>
                 <p class="muted">
@@ -448,7 +468,7 @@ export function JourneyActions({
                 Revisá los datos. Al confirmar{" "}
                 {mode === "OPEN"
                   ? "se abrirá la jornada con el fondo indicado"
-                  : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
+                  : mode === "CLOSE" ? "se cerrará la jornada y se devolverá todo el stock indicado a fábrica" : "se descontarán las cantidades de fábrica y se sumarán a la jornada"}
                 .
               </p>
             )}
@@ -477,12 +497,12 @@ export function JourneyActions({
                     class="primary"
                     onClick={() => void confirm()}
                   >
-                    Confirmar {mode === "OPEN" ? "apertura" : "carga"}
+                    Confirmar {mode === "OPEN" ? "apertura" : mode === "CLOSE" ? "cierre" : "carga"}
                   </button>
                 </>
               ) : (
                 <button class="primary">
-                  Revisar {mode === "OPEN" ? "apertura" : "carga"}
+                  Revisar {mode === "OPEN" ? "apertura" : mode === "CLOSE" ? "cierre" : "carga"}
                 </button>
               )}
             </div>

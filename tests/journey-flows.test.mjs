@@ -29,7 +29,7 @@ async function setup({
   let journey = active ? "00000000-0000-4000-8000-000000000099" : null,
     first = true,
     refreshFail = false,
-    stock = 0;
+    stock = 0, closed = false;
   const bodies = [],
     ledger = new Map(),
     key = "agua.jornada.pending.v1.admin";
@@ -49,7 +49,7 @@ async function setup({
     jornada: {
       id: journey,
       fecha: "2026-10-08",
-      estado: "ABIERTA",
+      estado: closed ? "CERRADA" : "ABIERTA",
       efectivoInicial: 24000,
     },
     stockJornada: [{ productoId: "p", estado: "LLENO", cantidad: stock }],
@@ -76,7 +76,7 @@ async function setup({
                 {
                   id: journey,
                   fecha: "2026-10-08",
-                  estado: "ABIERTA",
+                  estado: closed ? "CERRADA" : "ABIERTA",
                   camionetaNombre: "Camioneta 1",
                   patente: "AA",
                   repartidorNombre: "Rep",
@@ -116,6 +116,7 @@ async function setup({
           },
         ]),
       );
+    if (url.endsWith("/cierre/previa")) return new Response(JSON.stringify({ jornada: snapshot().jornada, caja: { efectivoEsperado: 24000 }, stockADevolver: [{productoId: "p", nombre: "Bidón de 12 litros", estado: "LLENO", cantidad: 2}, {productoId: "m", nombre: "Máquina", estado: "DISPONIBLE", cantidad: 1}] }));
     if (url.endsWith("/csrf"))
       return new Response(
         JSON.stringify({ headerName: "X-CSRF-TOKEN", token: "csrf" }),
@@ -129,7 +130,10 @@ async function setup({
           status: 409,
         });
       if (!ledger.has(body.operacionId)) {
-        if (url.endsWith("/cargas")) {
+        if (url.endsWith("/cierre")) {
+          closed = true; stock = 0;
+          ledger.set(body.operacionId, {id: body.operacionId, jornadaId: journey});
+        } else if (url.endsWith("/cargas")) {
           stock += body.items.reduce((n, i) => n + i.cantidad, 0);
           ledger.set(body.operacionId, {
             id: body.operacionId,
@@ -157,7 +161,7 @@ async function setup({
       return new Response(JSON.stringify(snapshot()));
     return new Response(
       JSON.stringify({
-        estado: "ABIERTA",
+        estado: closed ? "CERRADA" : "ABIERTA",
         efectivoInicial: 24000,
         totalCobrado: 0,
         totalGastado: 0,
@@ -196,8 +200,9 @@ async function setup({
     await wait();
   }
   async function confirm(kind) {
-    click(kind === "OPEN" ? "Abrir jornada" : "Cargar / recargar stock");
+    click(kind === "OPEN" ? "Abrir jornada" : kind === "CLOSE" ? "Cerrar jornada" : "Cargar / recargar stock");
     await wait();
+    if (kind === "CLOSE") { input('input[aria-label="Efectivo contado"]', "24000"); await wait(); }
     if (kind === "LOAD") {
       input('input[aria-label="Cantidad de Bidón de 12 litros"]', "2");
       await wait();
@@ -208,7 +213,7 @@ async function setup({
         new w.Event("submit", { bubbles: true, cancelable: true }),
       );
     await wait();
-    click(kind === "OPEN" ? "Confirmar apertura" : "Confirmar carga");
+    click(kind === "OPEN" ? "Confirmar apertura" : kind === "CLOSE" ? "Confirmar cierre" : "Confirmar carga");
     await wait();
     await wait();
   }
@@ -305,4 +310,23 @@ test("no prepara apertura si existe una entrega pendiente", async () => {
   } finally {
     x.dom.window.close();
   }
+});
+
+test("cierre perdido reintenta mismo cuerpo, devuelve máquinas y bloquea nuevos movimientos", async () => {
+ const x = await setup({active:true,lost:true});
+ try {
+  await x.confirm("CLOSE");
+  const body = JSON.parse(x.bodies[0]);
+  assert.equal(body.efectivoContado,24000);
+  assert.deepEqual(body.devoluciones,[{productoId:"p",estado:"LLENO",cantidad:2},{productoId:"m",estado:"DISPONIBLE",cantidad:1}]);
+  x.click("Reintentar solicitud de jornada"); await wait(); await wait();
+  assert.equal(x.bodies[0],x.bodies[1]); assert.equal(x.ledger.size,1);
+  assert.equal(x.w.localStorage.getItem(x.key),null);
+  assert.match(x.text(),/Jornada cerrada/);
+  assert.ok(![...x.w.document.querySelectorAll("button")].some(b=>b.textContent === "Cerrar jornada"));
+ } finally {x.dom.window.close();}
+});
+test("cierre confirmado con refresco fallido solo vuelve a consultar", async () => {
+ const x=await setup({active:true,refreshFailure:true});
+ try {await x.confirm("CLOSE"); assert.equal(JSON.parse(x.w.localStorage.getItem(x.key)).status,"confirmed"); x.allowRefresh(); x.click("Actualizar jornada confirmada"); await wait(); await wait(); assert.equal(x.bodies.length,1); assert.equal(x.w.localStorage.getItem(x.key),null); } finally {x.dom.window.close();}
 });
