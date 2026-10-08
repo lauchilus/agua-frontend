@@ -72,3 +72,54 @@ export const download = (id: string) =>
   get<Snapshot>(`/jornadas/${encodeURIComponent(id)}/datos-offline`);
 export const cash = (id: string) =>
   get<Caja>(`/jornadas/${encodeURIComponent(id)}/caja`);
+
+export const listJourneys = (
+  estado: string,
+  pagina: number,
+  signal?: AbortSignal,
+) =>
+  get<import("./types").PaginaJornadas>(
+    `/jornadas?estado=${encodeURIComponent(estado)}&pagina=${pagina}&tamanio=20`,
+    signal,
+  );
+
+export interface SyncResponse {
+  completo: boolean;
+  confirmadas: number;
+  pendientes: number;
+  resultados: {
+    estado: string;
+    httpStatus: number;
+    mensaje: string | null;
+    respuesta: { id: string; total: number; saldoCliente: number } | null;
+  }[];
+}
+export async function sendOperation(
+  jornadaId: string,
+  operation: import("./operations-model").Operation,
+): Promise<SyncResponse> {
+  // Nuevo token y misma sesión para cada envío; nunca generar otro UUID al reintentar.
+  const csrf = await get<{ headerName: string; token: string }>("/csrf");
+  const response = await fetch(
+    `/api/v1/jornadas/${encodeURIComponent(jornadaId)}/sincronizacion`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      signal: AbortSignal.timeout(25000),
+      headers: {
+        Authorization: authorization,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      body: JSON.stringify({ operaciones: [operation] }),
+    },
+  );
+  if (!response.ok)
+    throw new ApiError(
+      response.status,
+      `No se obtuvo confirmación (HTTP ${response.status}). La solicitud se conserva para reintentar. Si es 401/403, volvé a ingresar con el mismo usuario.`,
+    );
+  return response.json() as Promise<SyncResponse>;
+}

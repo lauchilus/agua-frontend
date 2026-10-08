@@ -1,25 +1,12 @@
-# AGUA · Frontend inicial 0.1
+# AGUA · Frontend 0.3 · Entregas y cobros con conexión
 
-Preact + TypeScript + Vite. Interfaz responsive de consulta conectada al backend Spring Boot existente. No modifica PostgreSQL ni registra entregas, cobros o cierres.
+Preact + TypeScript + Vite. Requiere el backend existente con sincronización, datos-offline y listado de jornadas. Esta actualización no requiere cambios del backend ni migraciones.
 
-## Requisitos
+## Actualizar
 
-- Windows con Node.js 24 LTS y npm: https://nodejs.org/es/download (instalador Windows x64, opciones predeterminadas). Abrir una nueva PowerShell después de instalar.
-- Backend con el módulo datos-offline funcionando en http://localhost:8080 y PostgreSQL iniciado, tal como en las pruebas anteriores.
-- Usuario admin o repartidor y su contraseña. Repartidor solo consulta sus propias jornadas.
+Detener Vite (Ctrl+C). Copiar el contenido de la carpeta agua-frontend del ZIP sobre el frontend existente, conservando .env y .git. No copiar estos archivos al backend.
 
-## Instalación paso a paso (PowerShell)
-
-1. Extraer el ZIP. Debe quedar `agua-frontend` con package.json dentro, separada de la carpeta del backend. Por ejemplo: `C:\Users\ama3485\Desktop\agua-frontend`.
-2. Abrir PowerShell en esa carpeta. Cada comando es una sola línea:
-
-```powershell
-Set-Location "$env:USERPROFILE\Desktop\agua-frontend"
-```
-
-```powershell
-node --version; npm.cmd --version
-```
+Desde PowerShell en agua-frontend, ejecutar cada línea:
 
 ```powershell
 npm.cmd ci
@@ -29,68 +16,119 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-3. Dejar esa terminal abierta. Abrir http://localhost:5173 en Chrome o Edge.
-4. Ingresar usuario y contraseña en el formulario de la aplicación. No hay ventana externa para credenciales.
-5. Pegar el ID de jornada y pulsar Consultar jornada. Para la prueba existente: `30bc9931-0557-404b-b642-fc8917cccdef`.
-6. Probar Resumen, Clientes, búsqueda, ficha de cliente y Stock. La jornada anterior debe figurar CERRADA, efectivo esperado $28.000, total cobrado $4.000. Cliente prueba sincronizacion: deuda $3.000 y dos envases de 12 litros. Cliente original: deuda $29.000.
-7. Reducir el ancho de la ventana o activar el modo dispositivo del navegador (F12, Ctrl+Shift+M) para revisar la vista de celular sin exponer credenciales por la red local.
-8. Ctrl+C en la terminal detiene el frontend. El backend sigue funcionando en su propia terminal/IDE.
+Abrir http://localhost:5173, recargar e ingresar con el usuario existente. Node.js24 LTS: https://nodejs.org/es/download. PostgreSQL y Spring Boot deben seguir activos en localhost:8080. El proxy está configurado; no cambiar CORS ni desactivar CSRF. Usar npm.cmd evita el bloqueo de npm.ps1 en PowerShell.
 
-## Compilación y vista del resultado
+Compilación y pruebas reproducibles (API simulado, no escriben en tu base):
+
+```powershell
+npm.cmd test
+```
 
 ```powershell
 npm.cmd run build
 ```
 
-Genera `dist`. Para probarlo localmente (también necesita el backend):
+`npm.cmd run preview` sirve dist en http://localhost:4173 con el mismo proxy. Dev/preview son para pruebas locales; el despliegue final requerirá HTTPS y frontend/API bajo el mismo origen.
+
+## Funciones nuevas
+
+Desde Clientes, elegir un cliente de una jornada ABIERTA. Arriba de su ficha aparecen Entrega/devolución y Cobro.
+
+Entrega:
+- Bidones12/20 activos; cantidades entregadas, vacíos y dañados devueltos.
+- Verificación local de stock y envases antes de enviar; el backend vuelve a validar.
+- Aplicación automática de cupos actuales. Excedentes al precio habitual, precio específico del cliente si está activo o precio excepcional con motivo.
+- Abono mensual opcional: precio completo, sin prorrateo; permite cargarlo sin entregar bidones. No permite elegir otra vez el mismo plan ya registrado ese mes.
+- Revisión de cantidades, cupos, unidades facturadas, total y saldo estimado antes de confirmar.
+- El cargo aumenta la deuda; no registra un pago automáticamente.
+
+Cobro:
+- Pago parcial o combinación de efectivo, transferencia y Mercado Pago.
+- Referencia opcional de pagos digitales.
+- Se registra el importe efectivamente cobrado, sin campos de vuelto. Si supera la deuda se advierte el saldo a favor.
+- Confirmar cobro es una operación separada de confirmar entrega.
+
+Los importes se ingresan sin separador de miles; aceptan coma o punto decimal. Cliente inactivo o jornada cerrada: solo consulta. No hay apertura/carga/cierre desde la pantalla todavía.
+
+## Solicitud pendiente y recuperación
+
+Antes de enviar se guarda UNA solicitud por usuario en localStorage de este origen, incluyendo UUID, jornada, cliente y cuerpo de la operación. No se guarda contraseña ni Authorization. El envío usa el endpoint de sincronización ya probado, con CSRF y verificación de cupo/importe.
+
+- Confirmación: actualizar saldos/caja y limpiar solicitud.
+- Respuesta perdida/timeout/HTTP inesperado: conservar cuerpo y UUID; pulsar Reintentar misma solicitud. No crear otra para reemplazarla.
+- Confirmada pero falla la actualización de pantalla: solo actualizar datos, sin otro POST.
+- Rechazo explícito: mostrar motivo; Descartar solicitud rechazada y actualizar refresca los datos antes de permitir otra carga.
+- Salir o recargar conserva la solicitud; ingresar con el mismo usuario permite recuperarla, incluso antes de seleccionar una jornada. El servidor sigue validando permisos y reintentos tras cierre.
+- Si falla guardar la solicitud, no se envía el POST.
+
+Usar una sola pestaña operativa por usuario en esta etapa. No borrar datos del sitio mientras exista una solicitud pendiente. El almacenamiento depende del navegador y del origen: localhost:5173 y localhost:4173 son distintos. El registro de una solicitud pendiente no constituye una cola offline: todavía no se puede iniciar sin Internet, guardar varias operaciones ni instalar como PWA. Los borradores sin confirmar solo existen en memoria.
+
+## Prueba guiada con tu base de pruebas
+
+Las jornadas anteriores están cerradas. Necesitamos una ABIERTA con BIDON_12 lleno. Estos comandos modifican tu base de pruebas solo al abrir/cargar. No los ejecutes nuevamente si ya tenés una jornada preparada.
+
+1. Autenticación en la consola (si no conservás $headers/$sesion):
 
 ```powershell
-npm.cmd run preview
+$baseUrl = "http://localhost:8080"; $usuario = Read-Host "Usuario admin"; $clave = Read-Host "Contraseña" -AsSecureString; $cred = [System.Management.Automation.PSCredential]::new($usuario, $clave); $basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(("{0}:{1}" -f $usuario, $cred.GetNetworkCredential().Password))); $headers = @{ Authorization = "Basic $basic" }; $csrf = Invoke-RestMethod -Uri "$baseUrl/api/v1/csrf" -Headers $headers -SessionVariable sesion -ErrorAction Stop; $headers[$csrf.headerName] = $csrf.token
 ```
 
-Abrir http://localhost:4173. No abrir index.html con doble clic. Vite dev/preview son herramientas locales, no el despliegue final.
-
-## Si tu backend utiliza otra dirección
-
-Copiar `.env.example` a `.env` y cambiar BACKEND_URL. Es una configuración del proxy, no lleva credenciales. Reiniciar Vite después de modificarla.
+2. Consultar abiertas antes de crear otra:
 
 ```powershell
-Copy-Item .env.example .env
+$jornadasWeb = Invoke-RestMethod -Uri "$baseUrl/api/v1/jornadas?estado=ABIERTA&tamanio=100" -Headers $headers -WebSession $sesion -ErrorAction Stop; $jornadasWeb.contenido | Format-Table id, fecha, camionetaNombre, repartidorNombre
 ```
 
-Las solicitudes del navegador van a /api. Vite las reenvía al backend. No se requieren cambios de CORS ni desactivar CSRF. Solo se realizan GET; el manejo de CSRF para escrituras se incorporará con los formularios de operaciones.
+Si hay una abierta para Camioneta1/Repartidor1, usar su ID en $jornadaWebId y consultar su stock. No volver a abrirla ni cargar si ya tiene stock suficiente.
 
-## Errores habituales
+3. SOLO si no hay abierta, preparar el cuerpo una vez y enviar:
 
-- `node` no se reconoce: instalar Node.js y abrir una terminal nueva.
-- PowerShell bloquea npm.ps1: usar `npm.cmd` como en esta guía; no cambiar la política de ejecución.
-- `npm ci` falla: comprobar conexión a Internet, estar en la carpeta con package.json y conservar package-lock.json. No borrar el lockfile como primer recurso.
-- Puerto 5173 ocupado: detener otra instancia de este frontend con Ctrl+C.
-- No conecta / HTTP 500 o 502: comprobar backend en puerto8080 y PostgreSQL; revisar su consola.
-- 401: revisar credenciales. 403 en la jornada: usar el repartidor asignado o admin. 404: revisar el UUID y que el backend incluya datos-offline.
-- Al recargar la página pide ingreso nuevamente: comportamiento previsto; las credenciales y los datos solo se mantienen en memoria.
-- Los nombres se ven bien en el navegador aunque PowerShell mostrara BidÃ³n: el frontend interpreta JSON como UTF-8.
+```powershell
+$bodyJornadaWeb = @{ operacionId = [guid]::NewGuid().ToString(); camionetaId = "a86d856e-cc0f-4493-8c60-0a4481914c62"; repartidorId = "b0d2ba1b-ab31-4c5d-88a4-0b897478e90e"; efectivoInicial = 24000 } | ConvertTo-Json
+```
 
-## Alcance real de esta entrega
+```powershell
+$jornadaWeb = Invoke-RestMethod -Method Post -Uri "$baseUrl/api/v1/jornadas" -Headers $headers -WebSession $sesion -ContentType "application/json" -Body $bodyJornadaWeb -ErrorAction Stop
+```
 
-Incluye login Basic, consulta por UUID, caja, catálogo, stock, clientes compartidos, búsqueda, saldos, envases, máquinas, abonos/cupos actuales y precios especiales vigentes. Usa datos reales del API; no contiene datos simulados en el producto.
+```powershell
+$jornadaWebId = $jornadaWeb.id; $jornadaWeb | Format-List
+```
 
-La caja se consulta por separado de datos-offline; ambas lecturas pueden diferir levemente en tiempo si la jornada está abierta. La descarga completa tiene su propia vista consistente de base. Se muestran explícitamente datos actuales del cliente y la caja de la jornada seleccionada.
+Si falla la apertura, no continuar con cargas usando una variable anterior. Consultar abiertas y revisar el error. Ante pérdida de respuesta, reenviar el mismo cuerpo sin generar otro UUID.
 
-Las credenciales Basic se mantienen únicamente en memoria, nunca en localStorage/sessionStorage/IndexedDB. Salir limpia la memoria de la interfaz; no es todavía un endpoint de revocación de sesiones en el backend. No introducir contraseñas en .env, Git ni archivos. Para producción se configurará HTTPS y el frontend/API bajo el mismo origen.
+4. Consultar fábrica y jornada antes de cargar:
 
-Pendiente: selección automática de jornada, apertura/carga/cierre desde pantalla, edición/alta de clientes, entregas/cobros/gastos, cola persistente con UUID, IndexedDB, PWA instalable y panel administrativo. No permite operar sin conexión ni conserva información al cerrar o recargar la pestaña. Una consulta fallida conserva la última vista cargada y la identifica como anterior.
+```powershell
+$fabricaWeb = Invoke-RestMethod -Uri "$baseUrl/api/v1/stock/fabrica" -Headers $headers -WebSession $sesion -ErrorAction Stop; $fabricaWeb | Where-Object { $_.codigo -eq "BIDON_12" } | Format-Table codigo, estado, cantidad
+```
+
+```powershell
+Invoke-RestMethod -Uri "$baseUrl/api/v1/jornadas/$jornadaWebId/stock" -Headers $headers -WebSession $sesion -ErrorAction Stop | Format-Table codigo, estado, cantidad
+```
+
+Según el último estado conocido, fábrica tenía2 BIDON_12 llenos. Si la nueva jornada está vacía y fábrica tiene al menos2, preparar una vez:
+
+```powershell
+$bodyCargaWeb = @{ operacionId = [guid]::NewGuid().ToString(); items = @(@{ productoId = "00000000-0000-4000-8000-000000000001"; cantidad = 2 }) } | ConvertTo-Json -Depth 5
+```
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "$baseUrl/api/v1/jornadas/$jornadaWebId/cargas" -Headers $headers -WebSession $sesion -ContentType "application/json" -Body $bodyCargaWeb -ErrorAction Stop | ConvertTo-Json -Depth 5
+```
+
+5. En la web, Actualizar lista, elegir la jornada ABIERTA. Cliente prueba sincronizacion tenía deuda3000 y2 envases12; comprobar antes de continuar. Si el estado es diferente, los resultados deben calcularse a partir de ese estado real.
+6. Clientes → Cliente prueba sincronizacion → Entrega/devolución. No cargar abono. BIDON_12: entregados1; vacíos0; dañados0. Sin precio excepcional. Revisar: total3500, facturados1, incluidos0. Confirmar una sola vez.
+7. Resultado esperado: deuda6500, envases12=3, stock12lleno=1, caja sin cambios.
+8. Cobro → Efectivo1000 → Revisar → Confirmar. Resultado esperado: deuda5500; ingresos efectivo1000; efectivo esperado25000 si la jornada inició con24000 y sin otros movimientos.
+9. Si se pierde una respuesta, usar exclusivamente el botón Reintentar misma solicitud. No volver a llenar el formulario.
 
 ## Git
 
-Desde esta carpeta, si se usa un repositorio separado:
+Después de probar, desde el frontend:
 
 ```powershell
-git init
-```
-
-```powershell
-git add .
+git add src tests package.json package-lock.json README.md
 ```
 
 ```powershell
@@ -98,7 +136,9 @@ git diff --cached --stat
 ```
 
 ```powershell
-git commit -m "feat: frontend inicial de consulta para reparto"
+git commit -m "feat: entregas y cobros con confirmacion e idempotencia"
 ```
 
-Si la carpeta está dentro de un repositorio existente, omitir git init y agregarla desde ese repositorio. node_modules, dist y .env se excluyen de Git.
+## Validación y límites
+
+Compilación TypeScript/Vite y pruebas automatizadas de cálculos y flujos en JSDOM con API simulado. No accedimos al servidor local del usuario ni realizamos cargos reales durante estas pruebas. La validación visual y contra Spring Boot real se completa con la prueba guiada. No hay pruebas nuevas de concurrencia entre pestañas. La aplicación sigue siendo con conexión; no incluye gastos/máquinas/altas/administración como formularios todavía.

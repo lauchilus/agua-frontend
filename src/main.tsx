@@ -3,6 +3,8 @@ import { useState } from "preact/hooks";
 import { cash, clearAuth, download, login } from "./api";
 import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
+import { JourneyPicker } from "./JourneyPicker";
+import { Operations } from "./Operations";
 const money = (n: number) =>
   new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -42,18 +44,7 @@ function App() {
       setBusy(false);
     }
   }
-  async function load(e?: Event) {
-    e?.preventDefault();
-    if (busy) return;
-    const target = id.trim();
-    if (
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        target,
-      )
-    ) {
-      setError("Ingresá un ID de jornada válido.");
-      return;
-    }
+  async function load(target: string) {
     setBusy(true);
     setError("");
     try {
@@ -63,6 +54,7 @@ function App() {
           "Actualizá la aplicación para leer este formato de datos.",
         );
       const balance = await cash(target);
+      setId(target);
       setData(snapshot);
       setCaja(balance);
       setSelected(null);
@@ -72,6 +64,18 @@ function App() {
     } finally {
       setBusy(false);
     }
+  }
+  async function refreshAfterOperation() {
+    if (!id) return;
+    const snapshot = await download(id);
+    const balance = await cash(id);
+    setData(snapshot);
+    setCaja(balance);
+    setSelected((current) =>
+      current
+        ? (snapshot.clientes.find((c) => c.id === current.id) ?? null)
+        : null,
+    );
   }
   function logout() {
     clearAuth();
@@ -184,23 +188,32 @@ function App() {
                 {data ? "Tu jornada de reparto" : "Comencemos la jornada"}
               </h1>
             </div>
-            <span class="pill">Primera versión · Consulta</span>
+            <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
-          <form class="panel journey-picker" onSubmit={load}>
-            <label>
-              ID de jornada
-              <input
-                placeholder="Pegá el ID de la jornada"
-                value={id}
-                onInput={(e) => setId(e.currentTarget.value)}
-                disabled={busy}
-                required
-              />
-            </label>
-            <button class="primary" disabled={busy}>
-              {busy ? "Consultando…" : "Consultar jornada"}
+          <JourneyPicker
+            user={user}
+            disabled={busy}
+            currentId={id}
+            onSelect={load}
+          />
+          {data && (
+            <button
+              class="secondary"
+              disabled={busy}
+              onClick={() => void load(id)}
+            >
+              {busy ? "Consultando…" : "Actualizar jornada seleccionada"}
             </button>
-          </form>
+          )}
+          <Operations
+            key={user.username}
+            username={user.username}
+            data={data}
+            client={selected}
+            refresh={refreshAfterOperation}
+            setWorking={setBusy}
+            externalBusy={busy}
+          />
           {error && (
             <p class="error" role="alert">
               {error}
@@ -212,8 +225,8 @@ function App() {
               <h2>Elegí una jornada para empezar</h2>
               <p>Podés consultar una jornada abierta o revisar una cerrada.</p>
               <p class="muted">
-                En esta primera versión ingresamos su ID. La selección
-                automática se incorporará más adelante.
+                Elegí una jornada de la lista. Si no hay abiertas, podés
+                consultar las cerradas.
               </p>
             </div>
           ) : (
@@ -310,9 +323,8 @@ function App() {
                     </section>
                   </div>
                   <p class="notice">
-                    Esta entrega permite consultar. El registro de operaciones y
-                    el trabajo sin conexión se incorporarán en los próximos
-                    módulos.
+                    Para registrar entregas o cobros, elegí un cliente. El
+                    trabajo sin conexión todavía no está habilitado.
                   </p>
                 </>
               )}
@@ -505,7 +517,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión inicial 0.1</span>
+        AGUA · Reparto y administración <span>Versión 0.3</span>
       </footer>
     </div>
   );

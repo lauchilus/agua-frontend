@@ -13,6 +13,7 @@ export interface Cliente {
   tieneAbonoRegistrado: boolean;
 }
 export interface Producto {
+  tipo: string;
   id: string;
   codigo: string;
   nombre: string;
@@ -56,6 +57,14 @@ export interface Snapshot {
     consumidos: number;
     disponibles: number;
   }[];
+  planesAbono: {
+    id: string;
+    nombre: string;
+    precio: number;
+    activo: boolean;
+    version: number;
+  }[];
+  itemsPlanesAbono: { planId: string; productoId: string; cantidad: number }[];
   preciosClientes: {
     clienteId: string;
     productoId: string;
@@ -73,4 +82,19 @@ export interface Caja {
   ingresosEfectivo: number;
   ingresosTransferencia: number;
   ingresosMercadoPago: number;
+}
+
+export interface JornadaOpcion {
+  id: string;
+  fecha: string;
+  estado: string;
+  camionetaNombre: string;
+  patente: string;
+  repartidorNombre: string;
+}
+export interface PaginaJornadas {
+  contenido: JornadaOpcion[];
+  pagina: number;
+  tamanio: number;
+  hayMas: boolean;
 }

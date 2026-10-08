@@ -559,3 +559,115 @@ footer {
     flex-wrap: wrap;
   }
 }
+
+select {
+  font: inherit;
+  font-size: 16px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #c9d4ce;
+  background: white;
+  border-radius: 9px;
+  color: #203d38;
+}
+select:focus-visible {
+  outline: 3px solid #bf8b35;
+  outline-offset: 3px;
+}
+.journey-list {
+  margin: 16px 0;
+}
+.journey-option {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-align: left;
+  background: #f6f8f3;
+  margin: 8px 0;
+  color: #203d38;
+  border: 1px solid transparent;
+}
+.journey-option.chosen {
+  border-color: #184f42;
+  background: #eaf0e5;
+}
+.journey-option small {
+  color: #65786e;
+  margin-top: 4px;
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.operations {
+  margin-top: 20px;
+}
+.operations > h2 {
+  margin-top: 10px;
+}
+.operations fieldset {
+  border: 1px solid #dae3d6;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 18px 0;
+  min-width: 0;
+}
+.operations legend {
+  font-weight: 650;
+  padding: 0 8px;
+}
+.operations label {
+  margin: 10px 0;
+}
+.quantity-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.operations details {
+  margin-top: 14px;
+}
+.operations summary {
+  cursor: pointer;
+  padding: 10px 0;
+  color: #406d58;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.operations .form-wrapper {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.operations small {
+  overflow-wrap: anywhere;
+}
+.review {
+  padding-top: 12px;
+}
+@media (max-width: 600px) {
+  .quantity-fields {
+    grid-template-columns: 1fr;
+  }
+  .operations .tabs {
+    flex-wrap: wrap;
+  }
+  .operations .tabs button {
+    min-width: 120px;
+  }
+  .actions button {
+    width: 100%;
+  }
+}
