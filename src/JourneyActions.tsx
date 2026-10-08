@@ -130,8 +130,8 @@ export function JourneyActions({
     setReview(false);
     try {
       if (pending) throw new Error("Primero resolvé la solicitud pendiente.");
-      if (localStorage.getItem(`agua.factory.pending.v1.${user.username}`))
-        throw new Error("Primero resolvé el movimiento de fábrica pendiente.");
+      if ((localStorage.getItem(`agua.clients.pending.v1.${user.username}`) || localStorage.getItem(`agua.factory.pending.v1.${user.username}`)))
+        throw new Error("Primero resolvé la solicitud pendiente de clientes o fábrica.");
       if (localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
       if (kind === "OPEN") {
@@ -279,8 +279,8 @@ export function JourneyActions({
       }
       if (localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
-      if (localStorage.getItem(`agua.factory.pending.v1.${user.username}`))
-        throw new Error("Primero resolvé el movimiento de fábrica pendiente.");
+      if ((localStorage.getItem(`agua.clients.pending.v1.${user.username}`) || localStorage.getItem(`agua.factory.pending.v1.${user.username}`)))
+        throw new Error("Primero resolvé la solicitud pendiente de clientes o fábrica.");
       const body = { ...getBody(), operacionId: crypto.randomUUID() } as Body;
       const summary =
         mode === "OPEN"

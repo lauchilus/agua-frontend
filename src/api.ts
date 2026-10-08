@@ -139,13 +139,14 @@ export interface JourneyMutationResult {
   numero?: number;
   tipo?: string;
 }
-export async function postJourney(
+export async function postJourney<T = JourneyMutationResult>(
   path: string,
   body: unknown,
-): Promise<JourneyMutationResult> {
+  method: "POST" | "PUT" = "POST",
+): Promise<T> {
   const csrf = await get<{ headerName: string; token: string }>("/csrf");
   const response = await fetch("/api/v1" + path, {
-    method: "POST",
+    method,
     credentials: "same-origin",
     cache: "no-store",
     signal: AbortSignal.timeout(25000),
@@ -177,7 +178,7 @@ export async function postJourney(
           `No se obtuvo confirmación (HTTP ${response.status}). Reintentá la misma solicitud.`),
     );
   }
-  return response.json() as Promise<JourneyMutationResult>;
+  return response.json() as Promise<T>;
 }
 
 export const closurePreview = (id: string) => get<import("./types").ClosurePreview>(`/jornadas/${encodeURIComponent(id)}/cierre/previa`);
@@ -185,3 +186,9 @@ export const closurePreview = (id: string) => get<import("./types").ClosurePrevi
 export const expenseCategories = () => get<import('./expense-model').Category[]>('/categorias-gasto');
 export interface ExpenseRow {id:string;categoriaNombre:string;fecha:string;descripcion:string;medio:string;importe:number;referencia:string|null}
 export const journeyExpenses = (id:string,page:number) => get<{contenido:ExpenseRow[];pagina:number;tamanio:number;hayMas:boolean}>(`/jornadas/${encodeURIComponent(id)}/gastos?pagina=${page}&tamanio=20`);
+
+export interface ClientRecord {id:string;nombre:string;direccion:string;telefono:string;observaciones:string|null;activo:boolean;version:number}
+export interface ClientBody {operacionId:string;nombre:string;direccion:string;telefono:string;observaciones:string|null;version:number|null}
+export const searchClients=(query:string,page:number)=>get<{contenido:ClientRecord[];pagina:number;hayMas:boolean}>(`/clientes/gestion?busqueda=${encodeURIComponent(query)}&pagina=${page}`);
+export const getClient=(id:string)=>get<ClientRecord>(`/clientes/${encodeURIComponent(id)}`);
+export const saveClient=(id:string|null,body:ClientBody)=>postJourney<ClientRecord>(`/clientes/gestion${id?'/'+encodeURIComponent(id):''}`,body,id?'PUT':'POST');

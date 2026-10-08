@@ -1,3 +1,7 @@
+# Versión 0.9 · Clientes sin jornada
+
+Alta, búsqueda y edición independiente de jornadas. Actualizar backend y migración V15 antes de usar. Ver ACTUALIZAR_CLIENTES.md.
+
 # Versión 0.8 · Gastos de jornada
 
 Registro con categoría, fecha, medio e importe. Consulta paginada y egresos por medio. Solo frontend; ver ACTUALIZAR_GASTOS.md en el ZIP.

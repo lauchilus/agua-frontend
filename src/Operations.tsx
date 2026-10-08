@@ -165,8 +165,8 @@ export function Operations({
     setError("");
     setNotice("");
     try {
-      if (localStorage.getItem(`agua.factory.pending.v1.${username}`))
-        throw new Error("Primero resolvé el movimiento de fábrica pendiente.");
+      if ((localStorage.getItem(`agua.clients.pending.v1.${username}`) || localStorage.getItem(`agua.factory.pending.v1.${username}`)))
+        throw new Error("Primero resolvé la solicitud pendiente de clientes o fábrica.");
       if (localStorage.getItem(`agua.jornada.pending.v1.${username}`))
         throw new Error(
           "Primero resolvé la apertura o carga pendiente en Preparar el reparto.",
