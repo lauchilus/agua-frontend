@@ -671,3 +671,46 @@ select:focus-visible {
     width: 100%;
   }
 }
+
+.journey-actions .form-wrapper {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.journey-actions label {
+  margin: 14px 0;
+}
+.journey-actions small {
+  overflow-wrap: anywhere;
+}
+.load-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #e6ebe3;
+  padding: 12px 0;
+}
+.load-row input {
+  max-width: 140px;
+}
+.load-row small {
+  font-weight: 400;
+  color: #65786e;
+}
+.journey-actions .section-heading .actions {
+  justify-content: flex-start;
+}
+@media (max-width: 600px) {
+  .load-row {
+    gap: 10px;
+  }
+  .load-row input {
+    max-width: 90px;
+  }
+  .journey-actions .actions {
+    width: 100%;
+  }
+}

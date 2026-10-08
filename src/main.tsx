@@ -5,6 +5,7 @@ import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
 import { JourneyPicker } from "./JourneyPicker";
 import { Operations } from "./Operations";
+import { JourneyActions } from "./JourneyActions";
 const money = (n: number) =>
   new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -19,6 +20,7 @@ const stamp = (s: string) =>
     timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(s));
 function App() {
+  const [journeyRevision, setJourneyRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null),
     [username, setUsername] = useState(""),
     [password, setPassword] = useState("");
@@ -64,6 +66,16 @@ function App() {
     } finally {
       setBusy(false);
     }
+  }
+  async function completeJourney(target: string) {
+    const snapshot = await download(target);
+    const balance = await cash(target);
+    setId(target);
+    setData(snapshot);
+    setCaja(balance);
+    setSelected(null);
+    setTab("jornada");
+    setJourneyRevision((n) => n + 1);
   }
   async function refreshAfterOperation() {
     if (!id) return;
@@ -190,7 +202,16 @@ function App() {
             </div>
             <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
+          <JourneyActions
+            key={user.username}
+            user={user}
+            data={data}
+            busy={busy}
+            setWorking={setBusy}
+            onComplete={completeJourney}
+          />
           <JourneyPicker
+            key={user.username + journeyRevision}
             user={user}
             disabled={busy}
             currentId={id}
@@ -517,7 +538,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.3</span>
+        AGUA · Reparto y administración <span>Versión 0.4</span>
       </footer>
     </div>
   );

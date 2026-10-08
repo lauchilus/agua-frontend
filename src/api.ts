@@ -123,3 +123,59 @@ export async function sendOperation(
     );
   return response.json() as Promise<SyncResponse>;
 }
+
+export const openingOptions = () =>
+  get<import("./types").OpeningOptions>("/jornadas/apertura/opciones");
+export const factoryStock = () =>
+  get<import("./types").FactoryStock[]>("/stock/fabrica");
+export const products = async () =>
+  (await get<Omit<import("./types").Producto, "activo">[]>("/productos")).map(
+    (p) => ({ ...p, activo: true }),
+  );
+export interface JourneyMutationResult {
+  id: string;
+  jornadaId?: string;
+  estado?: string;
+  numero?: number;
+  tipo?: string;
+}
+export async function postJourney(
+  path: string,
+  body: unknown,
+): Promise<JourneyMutationResult> {
+  const csrf = await get<{ headerName: string; token: string }>("/csrf");
+  const response = await fetch("/api/v1" + path, {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    signal: AbortSignal.timeout(25000),
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      [csrf.headerName]: csrf.token,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const problem = await response.json();
+      detail = typeof problem.detail === "string" ? problem.detail : "";
+    } catch {
+      /* Respuesta sin ProblemDetail */
+    }
+    throw new ApiError(
+      response.status,
+      detail ||
+        ({
+          400: "Los datos enviados no son válidos.",
+          409: "No se pudo registrar: verificá jornadas abiertas, disponibilidad y stock.",
+          401: "Volvé a ingresar con el mismo usuario.",
+          403: "Sin permiso o sesión vencida. Volvé a ingresar con el mismo usuario.",
+        }[response.status] ??
+          `No se obtuvo confirmación (HTTP ${response.status}). Reintentá la misma solicitud.`),
+    );
+  }
+  return response.json() as Promise<JourneyMutationResult>;
+}

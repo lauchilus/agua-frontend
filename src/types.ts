@@ -98,3 +98,21 @@ export interface PaginaJornadas {
   tamanio: number;
   hayMas: boolean;
 }
+
+export interface OpeningOptions {
+  camionetas: {
+    id: string;
+    nombre: string;
+    patente: string;
+    ocupada: boolean;
+  }[];
+  repartidores: { id: string; nombre: string; ocupado: boolean }[];
+  efectivoInicialSugerido: number;
+}
+export interface FactoryStock {
+  productoId: string;
+  codigo: string;
+  nombre: string;
+  estado: string;
+  cantidad: number;
+}

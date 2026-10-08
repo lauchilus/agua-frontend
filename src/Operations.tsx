@@ -165,6 +165,10 @@ export function Operations({
     setError("");
     setNotice("");
     try {
+      if (localStorage.getItem(`agua.jornada.pending.v1.${username}`))
+        throw new Error(
+          "Primero resolvé la apertura o carga pendiente en Preparar el reparto.",
+        );
       const existing = initial(key);
       if (existing.error) throw new Error(existing.error);
       if (existing.pending) {
