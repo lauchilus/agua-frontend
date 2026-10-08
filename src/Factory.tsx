@@ -145,6 +145,8 @@ export function Factory({
           throw Error(
             "La producción requiere bidones y una cantidad positiva.",
           );
+        if (![12,20].includes(p.capacidadLitros ?? 0)) throw Error("No hay bolsa configurada para esta capacidad.");
+        const bolsa = `BOLSA_${p.capacidadLitros}`;
         const available = (code: string, st: string) =>
           rows.find((s) => s.codigo === code && s.estado === st)?.cantidad ?? 0;
         if (
@@ -152,11 +154,11 @@ export function Factory({
           Math.min(
             available(p.codigo, "VACIO"),
             available("TAPA", "DISPONIBLE"),
-            available("BOLSA", "DISPONIBLE"),
+            available(bolsa, "DISPONIBLE"),
           )
         )
-          throw Error("No hay suficientes vacíos, tapas o bolsas.");
-        summary = `Producir ${n} ${p.nombre}: sumar ${n} llenos y descontar ${n} vacíos, ${n} tapas y ${n} bolsas.`;
+          throw Error("No hay suficientes vacíos, tapas o bolsas de la capacidad seleccionada.");
+        summary = `Producir ${n} ${p.nombre}: sumar ${n} llenos y descontar ${n} vacíos, ${n} tapas y ${n} bolsas de ${p.capacidadLitros} litros.`;
       } else {
         const st = p.tipo === "BIDON" ? state : "DISPONIBLE";
         const row = rows.find((s) => s.productoId === p.id && s.estado === st);

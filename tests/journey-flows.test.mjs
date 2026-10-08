@@ -103,7 +103,7 @@ async function setup({
         }),
       );
     if (url.endsWith("/productos"))
-      return new Response(JSON.stringify([product]));
+      return new Response(JSON.stringify([product, {id:"bag",codigo:"BOLSA_20",nombre:"Bolsa de 20 litros",tipo:"INSUMO"}, {id:"cup",codigo:"COPA",nombre:"Copa",tipo:"COPA"}, {id:"machine",codigo:"MAQUINA",nombre:"Máquina",tipo:"MAQUINA"}]));
     if (url.endsWith("/stock/fabrica"))
       return new Response(
         JSON.stringify([
@@ -330,3 +330,5 @@ test("cierre confirmado con refresco fallido solo vuelve a consultar", async () 
  const x=await setup({active:true,refreshFailure:true});
  try {await x.confirm("CLOSE"); assert.equal(JSON.parse(x.w.localStorage.getItem(x.key)).status,"confirmed"); x.allowRefresh(); x.click("Actualizar jornada confirmada"); await wait(); await wait(); assert.equal(x.bodies.length,1); assert.equal(x.w.localStorage.getItem(x.key),null); } finally {x.dom.window.close();}
 });
+
+test("carga oculta insumos y conserva copas y máquinas",async()=>{const x=await setup({active:true});try{x.click("Cargar / recargar stock");await wait();const labels=[...x.w.document.querySelectorAll(".load-row")].map(x=>x.textContent).join(" ");assert.match(labels,/Copa/);assert.match(labels,/Máquina/);assert.match(labels,/Bidón/);assert.doesNotMatch(labels,/Bolsa/);}finally{x.dom.window.close();}});

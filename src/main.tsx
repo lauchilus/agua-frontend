@@ -547,7 +547,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.6</span>
+        AGUA · Reparto y administración <span>Versión 0.7</span>
       </footer>
     </div>
   );

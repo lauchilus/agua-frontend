@@ -36,6 +36,7 @@ export function loading(
     if (cantidad === 0) continue;
     const product = catalog.find((p) => p.id === id && p.activo);
     if (!product) throw new Error("Producto no disponible.");
+    if (!["BIDON", "MAQUINA", "COPA"].includes(product.tipo)) throw new Error("Solo se pueden cargar bidones, máquinas y copas.");
     const state = product.tipo === "BIDON" ? "LLENO" : "DISPONIBLE";
     const available =
       stock.find((s) => s.productoId === id && s.estado === state)?.cantidad ??

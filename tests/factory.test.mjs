@@ -1,10 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {JSDOM} from 'jsdom';import fs from 'node:fs';
 const code=fs.readFileSync(new URL('../dist/assets/'+fs.readdirSync(new URL('../dist/assets/',import.meta.url)).find(f=>f.endsWith('.js')),import.meta.url),'utf8');
 const wait=()=>new Promise(r=>setTimeout(r,70));
-async function setup(rep=false,lost=false){
+async function setup(rep=false,lost=false,wrongBag=false){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost:5173',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;w.TextEncoder=TextEncoder;w.AbortSignal=AbortSignal;
- const catalog=[{id:'p',codigo:'BIDON_12',nombre:'Bidón',tipo:'BIDON'},{id:'t',codigo:'TAPA',nombre:'Tapa',tipo:'INSUMO'},{id:'b',codigo:'BOLSA',nombre:'Bolsa',tipo:'INSUMO'}];
- const stock=[{productoId:'p',codigo:'BIDON_12',nombre:'Bidón',estado:'VACIO',cantidad:10},{productoId:'p',codigo:'BIDON_12',nombre:'Bidón',estado:'LLENO',cantidad:0},{productoId:'t',codigo:'TAPA',nombre:'Tapa',estado:'DISPONIBLE',cantidad:10},{productoId:'b',codigo:'BOLSA',nombre:'Bolsa',estado:'DISPONIBLE',cantidad:10}];
+ const catalog=[{id:'p',codigo:'BIDON_12',nombre:'Bidón',tipo:'BIDON',capacidadLitros:12},{id:'t',codigo:'TAPA',nombre:'Tapa',tipo:'INSUMO'},{id:'b',codigo:'BOLSA_12',nombre:'Bolsa',tipo:'INSUMO'}];
+ const stock=[{productoId:'p',codigo:'BIDON_12',nombre:'Bidón',estado:'VACIO',cantidad:10},{productoId:'p',codigo:'BIDON_12',nombre:'Bidón',estado:'LLENO',cantidad:0},{productoId:'t',codigo:'TAPA',nombre:'Tapa',estado:'DISPONIBLE',cantidad:10},{productoId:'b',codigo:'BOLSA_12',nombre:'Bolsa',estado:'DISPONIBLE',cantidad:10}];
+ if(wrongBag)stock[3].codigo='BOLSA_20';
  const bodies=[],ledger=new Set();let first=true;
  w.fetch=async(url,opt={})=>{let value={};if(url.endsWith('/auth/me'))value={username:'admin',roles:[rep?'ROLE_REPARTIDOR':'ROLE_ADMIN']};else if(url.includes('/jornadas?'))value={contenido:[],pagina:0,hayMas:false};else if(url.endsWith('/productos'))value=catalog;else if(url.endsWith('/stock/fabrica'))value=stock;else if(url.endsWith('/csrf'))value={headerName:'X-CSRF-TOKEN',token:'test'};else if(opt.method==='POST'){assert.equal(opt.headers['X-CSRF-TOKEN'],'test');bodies.push(opt.body);const b=JSON.parse(opt.body);if(!ledger.has(b.operacionId)){ledger.add(b.operacionId);if(url.endsWith('/producciones')){stock[0].cantidad-=b.cantidad;stock[1].cantidad+=b.cantidad;stock[2].cantidad-=b.cantidad;stock[3].cantidad-=b.cantidad;}else stock.find(s=>s.productoId===b.productoId&&s.estado===b.estado).cantidad+=b.cantidad;}if(lost&&first){first=false;throw Error('Respuesta perdida');}value={id:b.operacionId};}return new Response(JSON.stringify(value));};
  function input(el,value,event='input'){assert.ok(el);el.value=value;el.dispatchEvent(new w.Event(event,{bubbles:true}));}function click(text){const b=[...w.document.querySelectorAll('button')].find(b=>b.textContent===text);assert.ok(b,text);assert.ok(!b.disabled);b.click();}
@@ -15,3 +16,5 @@ test('ajuste perdido conserva UUID y no duplica stock',async()=>{const x=await s
 test('producción descuenta vacíos y ambos insumos',async()=>{const x=await setup();try{await x.prepare(true);x.click('Confirmar movimiento');await wait();assert.deepEqual(x.stock.map(s=>s.cantidad),[8,2,8,8]);}finally{x.dom.window.close();}});
 test('producción insuficiente y ajuste negativo no se envían',async()=>{for(const [production,n] of [[true,'11'],[false,'-11']]){const x=await setup();try{await x.prepare(production,n);assert.equal(x.bodies.length,0);assert.match(x.w.document.body.textContent,/No hay suficientes|stock negativo/);}finally{x.dom.window.close();}}});
 test('repartidor no ve administración de fábrica',async()=>{const x=await setup(true);try{assert.ok(!x.w.document.body.textContent.includes('Administración · Stock de fábrica'));}finally{x.dom.window.close();}});
+
+test('no produce 12 litros usando existencias de bolsas de 20',async()=>{const x=await setup(false,false,true);try{await x.prepare(true);assert.equal(x.bodies.length,0);assert.match(x.w.document.body.textContent,/No hay suficientes/);}finally{x.dom.window.close();}});

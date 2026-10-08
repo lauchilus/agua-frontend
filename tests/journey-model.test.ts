@@ -71,3 +71,8 @@ test("carga llena y disponible respeta stock y cantidades", () => {
     assert.throws(() => loading(products, stock, { p: value }));
   assert.throws(() => loading(products, stock, { p: "0" }));
 });
+
+test('no permite cargar insumos aunque tengan stock', () => {
+  const p:any={id:'i',nombre:'Bolsa',tipo:'INSUMO',activo:true};
+  assert.throws(()=>loading([p],[{productoId:'i',estado:'DISPONIBLE',cantidad:50} as any],{i:'1'}),/Solo se pueden cargar/);
+});

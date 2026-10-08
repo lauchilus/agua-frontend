@@ -150,7 +150,7 @@ export function JourneyActions({
         if (!data || data.jornada.estado !== "ABIERTA")
           throw new Error("Seleccioná una jornada abierta.");
         const [cat, fac] = await Promise.all([products(), factoryStock()]);
-        setCatalog(cat.filter((p) => p.activo));
+        setCatalog(cat.filter((p) => p.activo && ["BIDON", "MAQUINA", "COPA"].includes(p.tipo)));
         setStock(fac);
         setQuantities({});
       }

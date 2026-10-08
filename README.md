@@ -1,3 +1,7 @@
+# Versión 0.7 · Bolsas de 12 y 20 litros
+
+Actualizar primero backend y migración V14 del paquete. La carga de camioneta admite solo bidones, máquinas y copas. La producción consume la bolsa de su capacidad. Ver ACTUALIZAR_BOLSAS.md.
+
 # Versión 0.6 · Stock de fábrica
 
 Panel exclusivo del administrador con consulta, búsqueda, ajustes con motivo y producción. Actualizar primero el backend incluido para proteger los reintentos de ajustes. Consultar ACTUALIZAR_STOCK_FABRICA.md en el ZIP.

@@ -13,6 +13,7 @@ export interface Cliente {
   tieneAbonoRegistrado: boolean;
 }
 export interface Producto {
+  capacidadLitros?: number | null;
   tipo: string;
   id: string;
   codigo: string;
