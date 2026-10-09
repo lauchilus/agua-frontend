@@ -1,3 +1,30 @@
+AGUA 0.14 — Precios por cliente
+
+Actualización solo de frontend. No requiere migraciones ni cambios de backend.
+1. Detené Vite con Ctrl+C.
+2. Copiá el contenido de agua-frontend sobre tu carpeta actual. Conservá tu .env y .git.
+3. Dentro de esa carpeta ejecutá:
+npm.cmd ci
+npm.cmd run dev
+
+Prueba:
+- Ingresá como admin. Clientes > Gestionar clientes > Precios de [cliente].
+- Consultar precios del cliente > Configurar Bidón.
+- Indicá precio y motivo, revisá y confirmá.
+- Actualizá la jornada para descargar el precio nuevo.
+- Una entrega fuera del abono sin precio excepcional debe usar el precio del cliente.
+- Si indicás precio excepcional de entrega, este tiene prioridad.
+- Para volver al general, desmarcá Usar precio especial e indicá motivo.
+- El repartidor no ve el editor permanente; conserva el precio excepcional de entrega.
+- No cambia ventas anteriores ni el cargo mensual de abonos.
+- Ante conflicto o respuesta perdida, actualizar y verificar; no se reenvía automáticamente.
+
+Validación: compilación y 62 pruebas automáticas de modelos/interfaz con API simulada.
+Después de probar:
+git add .
+git commit -m "feat: precios especiales por cliente en administracion"
+
+
 # Versión 0.13 · Precios generales
 
 Edición de precios de bidones y copas para administrador. Solo frontend. Ver ACTUALIZAR_PRECIOS.md.

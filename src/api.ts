@@ -197,3 +197,7 @@ export const saveCategory=(id:string|null,body:{nombre:string;activo?:boolean;ve
 export const adminPlans=()=>get<import('./plan-model').PlanRecord[]>('/admin/planes-abono');
 export const savePlan=(id:string|null,body:ReturnType<typeof import('./plan-model').planBody>)=>postJourney<import('./plan-model').PlanRecord>(id?`/admin/planes-abono/${encodeURIComponent(id)}`:'/admin/planes-abono',body,id?'PUT':'POST');
 export const saveProductPrice=(id:string,precioVenta:number,version:number)=>postJourney<import('./types').Producto>(`/admin/productos/${encodeURIComponent(id)}/precio`,{precioVenta,version},'PUT');
+
+export interface ClientPrice {productoId:string;precio:number;activo:boolean;version:number;motivo:string}
+export const clientPrices=(id:string)=>get<ClientPrice[]>(`/clientes/${encodeURIComponent(id)}/precios`);
+export const saveClientPrice=(id:string,product:string,body:{precio:number;activo:boolean;version:number|null;motivo:string})=>postJourney<ClientPrice>(`/admin/clientes/${encodeURIComponent(id)}/precios/${encodeURIComponent(product)}`,body,'PUT');

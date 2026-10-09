@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {JSDOM} from 'jsdom';import fs from 'node:fs';
-const code=fs.readFileSync(new URL('../dist/assets/'+fs.readdirSync(new URL('../dist/assets/',import.meta.url)).find(f=>f.endsWith('.js')),import.meta.url),'utf8');const wait=()=>new Promise(r=>setTimeout(r,70));
+const code=fs.readFileSync(new URL('../dist/assets/'+fs.readFileSync(new URL('../dist/index.html',import.meta.url),'utf8').match(/assets\/([^" ]+\.js)/)[1],import.meta.url),'utf8');const wait=()=>new Promise(r=>setTimeout(r,70));
 async function setup({lost=false,conflict=false}={}){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost:5173',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;w.TextEncoder=TextEncoder;w.AbortSignal=AbortSignal;
  let rows=[{id:'c',nombre:'Original',direccion:'Calle 1',telefono:'123',observaciones:null,activo:true,version:0}],first=true;const bodies=[],ledger=new Map();

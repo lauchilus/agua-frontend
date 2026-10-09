@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {JSDOM} from 'jsdom';import fs from 'node:fs';
-const code=fs.readFileSync(new URL('../dist/assets/'+fs.readdirSync(new URL('../dist/assets/',import.meta.url)).find(f=>f.endsWith('.js')),import.meta.url),'utf8');
+const code=fs.readFileSync(new URL('../dist/assets/'+fs.readFileSync(new URL('../dist/index.html',import.meta.url),'utf8').match(/assets\/([^" ]+\.js)/)[1],import.meta.url),'utf8');
 const wait=()=>new Promise(r=>setTimeout(r,70));
 async function setup(rep=false,lost=false,wrongBag=false){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost:5173',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;w.TextEncoder=TextEncoder;w.AbortSignal=AbortSignal;
