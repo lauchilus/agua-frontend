@@ -1,3 +1,29 @@
+AGUA 0.15 — Ficha de cuenta del cliente
+
+Solo frontend. Sin cambios de backend ni migraciones.
+Detené Vite con Ctrl+C. Copiá agua-frontend sobre tu carpeta actual conservando .env y .git.
+Dentro de la carpeta del frontend:
+npm.cmd ci
+npm.cmd run dev
+
+Prueba como admin o repartidor, incluso sin jornada:
+1. Clientes > Gestionar clientes > Ver cuenta de [cliente].
+2. Elegí Desde/Hasta y pulsá Consultar cuenta.
+3. Verificá deuda o saldo a favor, envases y máquinas actuales.
+4. El historial incluye entregas, devoluciones y cobros; los cobros reducen el saldo.
+5. Las fechas del historial se muestran con horario de Buenos Aires, en formato de 24 horas.
+6. Probá un período sin movimientos y cambiá de cliente.
+7. Si hay más de 20 movimientos, usá Más movimientos.
+El rango se aplica al historial, no al saldo y tenencias actuales.
+Esta ficha es de consulta; no registra cobros ni entregas.
+El historial mostrado no incluye movimientos físicos de máquinas; se muestra su tenencia actual.
+
+Validado: build y 67 pruebas de modelos e interfaz con API simulada.
+Después de verificar en tu entorno:
+git add .
+git commit -m "feat: ficha de cuenta e historial de clientes"
+
+
 AGUA 0.14 — Precios por cliente
 
 Actualización solo de frontend. No requiere migraciones ni cambios de backend.

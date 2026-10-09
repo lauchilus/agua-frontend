@@ -201,3 +201,10 @@ export const saveProductPrice=(id:string,precioVenta:number,version:number)=>pos
 export interface ClientPrice {productoId:string;precio:number;activo:boolean;version:number;motivo:string}
 export const clientPrices=(id:string)=>get<ClientPrice[]>(`/clientes/${encodeURIComponent(id)}/precios`);
 export const saveClientPrice=(id:string,product:string,body:{precio:number;activo:boolean;version:number|null;motivo:string})=>postJourney<ClientPrice>(`/admin/clientes/${encodeURIComponent(id)}/precios/${encodeURIComponent(product)}`,body,'PUT');
+
+export interface ClientHolding {productoId:string;codigo:string;nombre:string;cantidad:number}
+export interface ClientSituation {clienteId:string;saldo:number;envases:ClientHolding[]}
+export interface ClientHistory {clienteId:string;desde:string;hasta:string;saldoActual:number;contenido:{operacionId:string;jornadaId:string;creadoEn:string;tipo:string;importe:number;saldoResultante:number}[];pagina:number;tamanio:number;totalElementos:number;totalPaginas:number}
+export const clientSituation=(id:string)=>get<ClientSituation>(`/clientes/${encodeURIComponent(id)}/situacion`);
+export const clientMachines=(id:string)=>get<ClientHolding[]>(`/clientes/${encodeURIComponent(id)}/maquinas`);
+export const clientMovements=(id:string,desde:string,hasta:string,pagina:number)=>get<ClientHistory>(`/clientes/${encodeURIComponent(id)}/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}&pagina=${pagina}&tamanio=20`);
