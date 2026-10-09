@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {planBody} from '../src/plan-model.ts';
+const products:any=[{id:'a',tipo:'BIDON',activo:true},{id:'b',tipo:'BIDON',activo:true},{id:'m',tipo:'MAQUINA',activo:true}];
+test('plan admite ambos tamaños con precio exacto y versión',()=>{const p=planBody(' Mixto ','18000,50',true,{a:'2',b:'4'},products,3);assert.equal(p.nombre,'Mixto');assert.equal(p.precio,18000.5);assert.equal(p.version,3);assert.deepEqual(p.items,[{productoId:'a',cantidad:2},{productoId:'b',cantidad:4}]);});
+test('plan rechaza cupo vacío, fracciones, máquinas y precio negativo',()=>{for(const q of [{a:'0'},{a:'1.5'},{m:'1'},{a:'-1'}])assert.throws(()=>planBody('Plan','18000',true,q,products,null));assert.throws(()=>planBody('Plan','-1',true,{a:'2'},products,null));});

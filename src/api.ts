@@ -194,3 +194,5 @@ export const getClient=(id:string)=>get<ClientRecord>(`/clientes/${encodeURIComp
 export const saveClient=(id:string|null,body:ClientBody)=>postJourney<ClientRecord>(`/clientes/gestion${id?'/'+encodeURIComponent(id):''}`,body,id?'PUT':'POST');
 export const adminCategories=()=>get<import('./expense-model').Category[]>('/categorias-gasto?incluirInactivas=true');
 export const saveCategory=(id:string|null,body:{nombre:string;activo?:boolean;version?:number})=>postJourney<import('./expense-model').Category>(id?`/admin/categorias-gasto/${encodeURIComponent(id)}`:'/admin/categorias-gasto',body,id?'PUT':'POST');
+export const adminPlans=()=>get<import('./plan-model').PlanRecord[]>('/admin/planes-abono');
+export const savePlan=(id:string|null,body:ReturnType<typeof import('./plan-model').planBody>)=>postJourney<import('./plan-model').PlanRecord>(id?`/admin/planes-abono/${encodeURIComponent(id)}`:'/admin/planes-abono',body,id?'PUT':'POST');

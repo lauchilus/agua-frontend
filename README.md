@@ -1,3 +1,7 @@
+# Versión 0.12 · Planes de abono
+
+Crear y editar planes, precios y cupos; activar y desactivar. Solo frontend. Ver ACTUALIZAR_PLANES.md.
+
 # Versión 0.11 · Categorías de gastos
 
 Administración de categorías: alta, edición, activación y desactivación. Solo frontend; ver ACTUALIZAR_CATEGORIAS.md.
