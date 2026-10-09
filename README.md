@@ -1,3 +1,7 @@
+# Versión 0.10 · Máquinas
+
+Entrega y retiro sin cargo desde la ficha del cliente en una jornada abierta. Solo frontend. Ver ACTUALIZAR_MAQUINAS.md.
+
 # Versión 0.9 · Clientes sin jornada
 
 Alta, búsqueda y edición independiente de jornadas. Actualizar backend y migración V15 antes de usar. Ver ACTUALIZAR_CLIENTES.md.

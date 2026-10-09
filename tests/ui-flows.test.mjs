@@ -72,6 +72,7 @@ async function setup(options = {}) {
     planesAbono: [],
     itemsPlanesAbono: [],
   };
+  if(options.machines){snap.productos.push({id:"m",tipo:"MAQUINA",nombre:"Máquina",activo:true});snap.stockJornada.push({productoId:"m",estado:"DISPONIBLE",cantidad:2});snap.maquinasClientes.push({clienteId:"c",productoId:"m",cantidad:1});snap.clientes[0].tieneAbonoRegistrado=true;}
   let refreshFail = false,
     first = true;
   w.fetch = async (url, opts = {}) => {
@@ -103,7 +104,7 @@ async function setup(options = {}) {
       assert.ok(opts.headers.Authorization.startsWith("Basic "));
       bodies.push(opts.body);
       const op = JSON.parse(opts.body).operaciones[0];
-      const req = op.entrega ?? op.cobro;
+      const req = op.entrega ?? op.cobro ?? op.maquina;
       if (options.conflict)
         return new Response(
           JSON.stringify({
@@ -122,7 +123,8 @@ async function setup(options = {}) {
         );
       if (!ids.has(req.operacionId)) {
         let total;
-        if (op.tipo === "ENTREGA") {
+        if(op.tipo === "MAQUINA") {total=0;snap.stockJornada[1].cantidad-=req.entregadas-req.retiradas;snap.maquinasClientes[0].cantidad+=req.entregadas-req.retiradas;
+        } else if (op.tipo === "ENTREGA") {
           total = op.esperadoEntrega.total;
           snap.clientes[0].saldo += total;
           snap.stockJornada[0].cantidad -= req.items[0].entregados;
@@ -134,7 +136,7 @@ async function setup(options = {}) {
         ids.set(req.operacionId, {
           id: req.operacionId,
           total,
-          saldoCliente: snap.clientes[0].saldo,
+          saldoCliente: op.tipo === "MAQUINA" ? snap.maquinasClientes[0].cantidad : snap.clientes[0].saldo,
         });
       }
       if (options.lost && first) {
@@ -376,3 +378,7 @@ test("salir e ingresar recupera solicitud sin guardar contraseña", async () => 
     x.dom.window.close();
   }
 });
+
+async function machineAction(x,delivered,returned){x.input('[aria-label="Máquinas a entregar"]',delivered);await wait();x.input('[aria-label="Máquinas a retirar"]',returned);await wait();x.w.document.querySelector('.machine-form').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await wait();x.click('Confirmar máquinas');await wait();await wait();}
+test('máquina perdida reintenta sin duplicar ni cobrar',async()=>{const x=await setup({machines:true,lost:true});try{await machineAction(x,'1','0');assert.equal(x.snap.maquinasClientes[0].cantidad,2);x.click('Reintentar misma solicitud');await wait();await wait();assert.equal(x.bodies[0],x.bodies[1]);assert.equal(x.snap.maquinasClientes[0].cantidad,2);assert.equal(x.snap.stockJornada[1].cantidad,1);assert.equal(x.snap.clientes[0].saldo,3000);assert.match(x.text(),/Movimiento de máquinas confirmado/);assert.doesNotMatch(x.text(),/NaN/);}finally{x.dom.window.close();}});
+test('retiro de máquina vuelve a la jornada sin cambiar deuda',async()=>{const x=await setup({machines:true});try{await machineAction(x,'0','1');assert.equal(x.snap.maquinasClientes[0].cantidad,0);assert.equal(x.snap.stockJornada[1].cantidad,3);assert.equal(x.snap.clientes[0].saldo,3000);}finally{x.dom.window.close();}});

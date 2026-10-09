@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Snapshot, Cliente } from "./types";
+import {MachineForm} from "./MachineForm";
 import { sendOperation } from "./api";
 import {
   delivery,
@@ -129,7 +130,7 @@ export function Operations({
         const done: Pending = {
           ...p,
           status: "confirmed",
-          message: `${p.operation.tipo === "COBRO" ? "Cobro" : "Entrega"} confirmada por ${money(item.respuesta.total)}. Saldo del cliente: ${money(item.respuesta.saldoCliente)}.`,
+          message: p.operation.tipo === "MAQUINA" ? `Movimiento de máquinas confirmado. El cliente queda con ${item.respuesta.saldoCliente} máquina(s). Sin cargo.` : `${p.operation.tipo === "COBRO" ? "Cobro" : "Entrega"} confirmada por ${money(item.respuesta.total)}. Saldo del cliente: ${money(item.respuesta.saldoCliente)}.`,
         };
         save(done);
         await finish(done);
@@ -180,7 +181,7 @@ export function Operations({
       const id =
         operation.tipo === "ENTREGA"
           ? operation.entrega.operacionId
-          : operation.cobro.operacionId;
+          : operation.tipo === "MAQUINA" ? operation.maquina.operacionId : operation.cobro.operacionId;
       const p: Pending = {
         version: 1,
         id,
@@ -199,7 +200,7 @@ export function Operations({
   if (!client && !pending && !error && !notice && !storageError) return null;
   return (
     <section class="panel operations">
-      <span class="eyebrow">ENTREGAS Y COBROS</span>
+      <span class="eyebrow">ENTREGAS, COBROS Y MÁQUINAS</span>
       {storageError && (
         <p class="error" role="alert">
           {storageError}
@@ -226,7 +227,7 @@ export function Operations({
           </h2>
           <p>
             <b>{pending.clienteNombre}</b> ·{" "}
-            {pending.operation.tipo === "COBRO" ? "Cobro" : "Entrega"} ·{" "}
+            {pending.operation.tipo === "MAQUINA" ? "Máquinas (sin cargo)" : pending.operation.tipo === "COBRO" ? "Cobro" : "Entrega"} ·{" "}
             {money(pending.total)}
           </p>
           <small>Operación: {pending.id}</small>
@@ -259,7 +260,7 @@ export function Operations({
             </p>
           ) : !client.activo ? (
             <p class="notice">
-              El cliente está inactivo. No se pueden registrar operaciones.
+              El cliente está inactivo. Solo se permite retirar máquinas.
             </p>
           ) : (
             <OperationForm
@@ -270,6 +271,7 @@ export function Operations({
               submit={submit}
             />
           )}
+          {data.jornada.estado === "ABIERTA" && <MachineForm key={client.id+data.generadoEn+formKey+"machines"} data={data} client={client} busy={busy||externalBusy} submit={submit}/>}
         </>
       ) : null}
     </section>

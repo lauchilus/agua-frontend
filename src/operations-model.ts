@@ -55,6 +55,7 @@ export interface Payment {
   referencia?: string;
 }
 export type Operation =
+  | {tipo:"MAQUINA";maquina:{operacionId:string;clienteId:string;productoId:string;entregadas:number;retiradas:number}}
   | {
       tipo: "ENTREGA";
       entrega: DeliveryBody;
