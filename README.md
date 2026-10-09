@@ -1,3 +1,7 @@
+# Versión 0.13 · Precios generales
+
+Edición de precios de bidones y copas para administrador. Solo frontend. Ver ACTUALIZAR_PRECIOS.md.
+
 # Versión 0.12 · Planes de abono
 
 Crear y editar planes, precios y cupos; activar y desactivar. Solo frontend. Ver ACTUALIZAR_PLANES.md.
