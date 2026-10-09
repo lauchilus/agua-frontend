@@ -192,3 +192,5 @@ export interface ClientBody {operacionId:string;nombre:string;direccion:string;t
 export const searchClients=(query:string,page:number)=>get<{contenido:ClientRecord[];pagina:number;hayMas:boolean}>(`/clientes/gestion?busqueda=${encodeURIComponent(query)}&pagina=${page}`);
 export const getClient=(id:string)=>get<ClientRecord>(`/clientes/${encodeURIComponent(id)}`);
 export const saveClient=(id:string|null,body:ClientBody)=>postJourney<ClientRecord>(`/clientes/gestion${id?'/'+encodeURIComponent(id):''}`,body,id?'PUT':'POST');
+export const adminCategories=()=>get<import('./expense-model').Category[]>('/categorias-gasto?incluirInactivas=true');
+export const saveCategory=(id:string|null,body:{nombre:string;activo?:boolean;version?:number})=>postJourney<import('./expense-model').Category>(id?`/admin/categorias-gasto/${encodeURIComponent(id)}`:'/admin/categorias-gasto',body,id?'PUT':'POST');

@@ -1,3 +1,7 @@
+# Versión 0.11 · Categorías de gastos
+
+Administración de categorías: alta, edición, activación y desactivación. Solo frontend; ver ACTUALIZAR_CATEGORIAS.md.
+
 # Versión 0.10 · Máquinas
 
 Entrega y retiro sin cargo desde la ficha del cliente en una jornada abierta. Solo frontend. Ver ACTUALIZAR_MAQUINAS.md.

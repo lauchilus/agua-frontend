@@ -7,6 +7,7 @@ import { JourneyPicker } from "./JourneyPicker";
 import { Operations } from "./Operations";
 import { ExpenseList } from "./ExpenseList";
 import {ClientManager} from "./ClientManager";
+import {CategoryAdmin} from "./CategoryAdmin";
 import { Factory } from "./Factory";
 import { JourneyActions } from "./JourneyActions";
 const money = (n: number) =>
@@ -206,6 +207,7 @@ function App() {
             <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
           <ClientManager key={user.username} username={user.username} busy={busy} setWorking={setBusy} refresh={refreshAfterOperation}/>
+          {user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && (
             <Factory
               key={user.username}
@@ -554,7 +556,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.10</span>
+        AGUA · Reparto y administración <span>Versión 0.11</span>
       </footer>
     </div>
   );
