@@ -1,3 +1,35 @@
+AGUA 0.19 — Gastos generales y reporte por categoría
+
+Solo frontend, sin cambios de backend ni migraciones.
+Detené Vite y copiá agua-frontend sobre tu carpeta actual conservando .env y .git.
+Dentro de esa carpeta:
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Administración · Gastos generales y reporte > Administrar gastos generales.
+Elegí categoría, fecha, descripción, medio e importe. Revisá y confirmá.
+Acepta efectivo, transferencia y Mercado Pago.
+Estos gastos no afectan la caja de una jornada específica.
+Ante pérdida de respuesta, Reintentar mismo gasto conserva el UUID y el cuerpo.
+No borres el almacenamiento del navegador mientras haya un gasto pendiente.
+El reporte por fechas incluye gastos generales y de jornadas, agrupados por categoría y medio.
+Los nombres de categorías son los actuales.
+Consultá otra vez el resumen administrativo tras guardar; su Excel incluirá los nuevos totales.
+El Excel del resumen conserva su alcance anterior: totales y medios, sin detalle por categoría.
+
+Prueba:
+1. Registrar un gasto general de prueba en Servicios o Varios.
+2. Consultar reporte para su fecha; comprobar categoría, ámbito GENERAL y medio.
+3. Actualizar resumen administrativo; comprobar totalGastado y gastosGenerales.
+4. Verificar que caja de jornada no cambió por ese gasto.
+5. Como repartidor, comprobar que no aparezca esta sección.
+Validado: build y 85 pruebas automáticas aprobadas.
+
+Después de verificar:
+git add .
+git commit -m "feat: gastos generales y reporte por categoria"
+
+
 AGUA 0.18 — Alta de camionetas y repartidores; exportación Excel
 
 Actualización solo de frontend. Usa endpoints ya existentes; no hay migraciones.

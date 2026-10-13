@@ -226,3 +226,6 @@ export async function fleetList():Promise<FleetData>{
 }
 export const createVan=(nombre:string,patente:string)=>postJourney('/admin/camionetas',{nombre,patente});
 export const createDriver=(nombre:string,username:string,password:string)=>postJourney('/admin/usuarios',{nombre,username,password,rol:'REPARTIDOR'});
+
+export interface ExpenseReport {desde:string;hasta:string;total:number;filas:{categoriaId:string;categoriaNombreActual:string;ambito:string;medio:string;cantidadGastos:number;importe:number}[]}
+export const expenseReport=(desde:string,hasta:string)=>get<ExpenseReport>(`/admin/gastos/resumen?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`);
