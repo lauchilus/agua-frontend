@@ -1,3 +1,53 @@
+AGUA 0.18 — Alta de camionetas y repartidores; exportación Excel
+
+Actualización solo de frontend. Usa endpoints ya existentes; no hay migraciones.
+1. Detené Vite con Ctrl+C.
+2. Copiá agua-frontend sobre tu carpeta actual conservando .env y .git.
+3. Ejecutá dentro de la carpeta:
+npm.cmd ci
+npm.cmd run dev
+
+ALTAS
+Admin > Administración · Camionetas y repartidores > Administrar camionetas y repartidores.
+- Nueva camioneta: nombre y patente, revisar y confirmar.
+- Nuevo repartidor: nombre, usuario y contraseña repetida.
+- Contraseña: mínimo 12 caracteres, máximo 72 bytes UTF-8 (las tildes ocupan más de un byte).
+- Se crea siempre como REPARTIDOR, nunca administrador.
+- Los listados muestran registros activos y disponibilidad para jornadas.
+- Las contraseñas no se guardan en localStorage ni se incluyen en reportes.
+- Ante respuesta perdida, el formulario bloquea otra creación hasta actualizar el listado.
+  Verificá por patente o usuario si el alta ya quedó registrada.
+- Actualizá las opciones de apertura de jornada para seleccionar los nuevos registros.
+- Este paso agrega altas y consulta; edición, desactivación y cambio de contraseña no están incluidos.
+
+EXCEL
+Admin > Administración · Resumen > Ver resumen administrativo.
+Elegí período > Consultar resumen > Descargar Excel con gráficos.
+Descarga un .xlsx con:
+- Resumen: ventas, cargos de abonos, cobros, gastos por medio, cantidades.
+- Actuales: deuda, saldo a favor, envases y máquinas.
+- Gráficos de facturación por concepto y cobros/gastos por medio.
+Se exporta la última consulta mostrada, no los cambios de fecha aún sin consultar.
+El archivo no incluye contraseñas ni exporta el detalle individual de todas las operaciones.
+Los datos de Actuales no representan el saldo histórico al final del período.
+Los gráficos están vinculados a celdas del archivo.
+La exportación se genera localmente en el navegador sin agregar dependencias.
+Archivo validado estructuralmente con lector independiente; comprobar apertura visual en tu Excel.
+
+PRUEBA
+1. Crear una camioneta de prueba con patente nueva.
+2. Crear un repartidor con usuario nuevo; cerrar sesión e ingresar con esa cuenta.
+3. Verificar que el repartidor no vea las pantallas administrativas.
+4. Volver como admin y comprobar ambos en opciones de apertura.
+5. Descargar Excel para un período conocido y contrastar cifras con el resumen.
+6. Abrir el Excel y verificar los gráficos.
+Validación automática: build y 82 pruebas aprobadas.
+
+Después de probar:
+git add .
+git commit -m "feat: altas de camionetas y repartidores y reporte Excel"
+
+
 AGUA 0.17 — Historial administrativo de jornadas
 
 Solo frontend; sin cambios en backend ni base de datos.

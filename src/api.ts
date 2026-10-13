@@ -216,3 +216,13 @@ export const adminJourneys=(filter:import('./JourneyHistory').JourneyFilter,page
  if(filter.estado)q.set('estado',filter.estado);
  return get<import('./JourneyHistory').JourneyHistoryPage>(`/admin/jornadas?${q}`);
 };
+
+export interface FleetData {camionetas:import('./types').OpeningOptions['camionetas'];repartidores:{id:string;nombre:string;username:string;ocupado:boolean}[]}
+export async function fleetList():Promise<FleetData>{
+ const options=await openingOptions();
+ const repartidores=[];
+ for(const r of options.repartidores){const user=await get<{username:string}>(`/admin/usuarios/${encodeURIComponent(r.id)}`);repartidores.push({...r,username:user.username});}
+ return {camionetas:options.camionetas,repartidores};
+}
+export const createVan=(nombre:string,patente:string)=>postJourney('/admin/camionetas',{nombre,patente});
+export const createDriver=(nombre:string,username:string,password:string)=>postJourney('/admin/usuarios',{nombre,username,password,rol:'REPARTIDOR'});

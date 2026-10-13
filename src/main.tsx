@@ -1,3 +1,4 @@
+import {FleetAdmin} from './FleetAdmin';
 import {JourneyHistory} from './JourneyHistory';
 import {AdminDashboard} from './AdminDashboard';
 import { render } from "preact";
@@ -212,6 +213,7 @@ function App() {
           </div>
           {user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <JourneyHistory key={user.username} busy={busy} setWorking={setBusy}/>}
+          {user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           <ClientManager admin={user.roles.includes("ROLE_ADMIN")} key={user.username} username={user.username} busy={busy} setWorking={setBusy} refresh={refreshAfterOperation}/>
           {user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
@@ -564,7 +566,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.17</span>
+        AGUA · Reparto y administración <span>Versión 0.18</span>
       </footer>
     </div>
   );
