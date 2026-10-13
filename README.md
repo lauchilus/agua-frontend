@@ -1,3 +1,34 @@
+AGUA 0.20 — Navegación por secciones
+
+Solo frontend. Detené Vite y copiá agua-frontend conservando .env y .git.
+npm.cmd ci
+npm.cmd run dev
+
+Secciones:
+Reparto: apertura, carga, entregas, cobros, gastos de jornada y cierre.
+Clientes: búsqueda, alta, edición, cuenta y precios especiales.
+Reportes (admin): resumen, Excel e historial de jornadas.
+Gastos (admin): gastos generales, reporte por categoría y categorías.
+Administración (admin): camionetas, repartidores, precios, planes y fábrica.
+
+Cambiar de sección conserva los formularios montados y solicitudes pendientes.
+Durante una operación la navegación queda bloqueada.
+Al ingresar se abre Reparto.
+El repartidor solo ve Reparto y Clientes.
+Dentro del reparto, la pestaña de selección de clientes se llama Clientes del reparto.
+La gestión independiente de clientes está en Clientes del menú principal.
+
+Prueba:
+- Cambiar entre secciones y comprobar que solo una sea visible.
+- Abrir un formulario sin confirmar, cambiar de sección y volver; sus datos deben conservarse.
+- Consultar reportes y descargar Excel.
+- Probar en pantalla angosta o celular.
+- Entrar como repartidor y comprobar las dos secciones permitidas.
+
+git add .
+git commit -m "feat: navegacion por secciones para admin y reparto"
+
+
 AGUA 0.19 — Gastos generales y reporte por categoría
 
 Solo frontend, sin cambios de backend ni migraciones.

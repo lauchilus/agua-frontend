@@ -721,3 +721,11 @@ select:focus-visible {
 .report-table{overflow-x:auto}.report-table table{width:100%;border-collapse:collapse}.report-table th,.report-table td{padding:12px;text-align:right;border-bottom:1px solid #dce7eb;white-space:nowrap}.report-table th:first-child{text-align:left}
 
 .history-value{display:block;margin-top:8px;overflow-wrap:anywhere}
+
+.main-nav{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:#fff;border:1px solid #dce7eb;border-radius:14px;margin-bottom:20px}
+.main-nav button{flex:1 1 120px;padding:12px 16px;border:0;border-radius:9px;background:#eef5f7;color:#164754;font-weight:700;min-height:44px}
+.main-nav button.active{background:#164754;color:#fff}
+.main-nav button:focus-visible{outline:3px solid #2bb3c0;outline-offset:2px}
+.area-content[hidden]{display:none!important}
+.area-content:not([hidden]){display:grid;gap:20px}
+@media(max-width:480px){.main-nav{gap:6px}.main-nav button{flex-basis:calc(50% - 6px);font-size:.9rem}}

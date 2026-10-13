@@ -205,7 +205,7 @@ async function setup(options = {}) {
   await wait();
   w.document.querySelector(".journey-option").click();
   await wait();
-  click("Clientes");
+  click("Clientes del reparto");
   await wait();
   w.document.querySelector(".client").click();
   await wait();

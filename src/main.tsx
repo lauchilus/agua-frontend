@@ -30,6 +30,7 @@ const stamp = (s: string) =>
     timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(s));
 function App() {
+  const [area,setArea]=useState("reparto");
   const [journeyRevision, setJourneyRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null),
     [username, setUsername] = useState(""),
@@ -49,6 +50,7 @@ function App() {
     setError("");
     try {
       setUser(await login(username.trim(), password));
+      setArea("reparto");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -205,21 +207,31 @@ function App() {
         <main class="workspace">
           <div class="page-heading">
             <div>
-              <span class="eyebrow">REPARTO / CONSULTAS</span>
+              <span class="eyebrow">AGUA · GESTIÓN</span>
               <h1>
-                {data ? "Tu jornada de reparto" : "Comencemos la jornada"}
+                {area==="reparto"?(data ? "Tu jornada de reparto" : "Comencemos la jornada"):({clientes:"Gestión de clientes",reportes:"Reportes del negocio",gastos:"Gastos del negocio",admin:"Administración"})[area]}
               </h1>
             </div>
             <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
+          <nav class="main-nav" aria-label="Navegación principal">
+            {[["reparto","Reparto"],["clientes","Clientes"],...(user.roles.includes("ROLE_ADMIN")?[["reportes","Reportes"],["gastos","Gastos"],["admin","Administración"]]:[])].map(([value,label])=><button key={value} class={area===value?"active":""} aria-current={area===value?"page":undefined} disabled={busy} onClick={()=>setArea(value)}>{label}</button>)}
+          </nav>
+          <div class="area-content" hidden={area!=="reportes"} data-area="reportes">
           {user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <JourneyHistory key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <GeneralExpenses key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}
+          </div>
+          <div class="area-content" hidden={area!=="clientes"} data-area="clientes">
           <ClientManager admin={user.roles.includes("ROLE_ADMIN")} key={user.username} username={user.username} busy={busy} setWorking={setBusy} refresh={refreshAfterOperation}/>
+          </div>
+          <div class="area-content" hidden={area!=="gastos"} data-area="gastos">
+          {user.roles.includes("ROLE_ADMIN") && <GeneralExpenses key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}
+          {user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
+          </div>
+          <div class="area-content" hidden={area!=="admin"} data-area="admin">
+          {user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && (
             <Factory
               key={user.username}
@@ -228,6 +240,8 @@ function App() {
               setWorking={setBusy}
             />
           )}
+          </div>
+          <div class="area-content" hidden={area!=="reparto"} data-area="reparto">
           <JourneyActions
             key={user.username}
             user={user}
@@ -292,7 +306,7 @@ function App() {
               <nav class="tabs" aria-label="Secciones">
                 {[
                   ["jornada", "Resumen"],
-                  ["clientes", "Clientes"],
+                  ["clientes", "Clientes del reparto"],
                   ["stock", "Stock"],
                 ].map(([value, label]) => (
                   <button
@@ -565,10 +579,11 @@ function App() {
               )}
             </>
           )}
+          </div>
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.19</span>
+        AGUA · Reparto y administración <span>Versión 0.20</span>
       </footer>
     </div>
   );
