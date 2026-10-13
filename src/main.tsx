@@ -1,3 +1,4 @@
+import {AdminDashboard} from './AdminDashboard';
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import { cash, clearAuth, download, login } from "./api";
@@ -208,6 +209,7 @@ function App() {
             </div>
             <span class="pill">Entregas y cobros · Con conexión</span>
           </div>
+          {user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}
           <ClientManager admin={user.roles.includes("ROLE_ADMIN")} key={user.username} username={user.username} busy={busy} setWorking={setBusy} refresh={refreshAfterOperation}/>
           {user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
@@ -560,7 +562,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.15</span>
+        AGUA · Reparto y administración <span>Versión 0.16</span>
       </footer>
     </div>
   );

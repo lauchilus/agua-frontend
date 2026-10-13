@@ -208,3 +208,5 @@ export interface ClientHistory {clienteId:string;desde:string;hasta:string;saldo
 export const clientSituation=(id:string)=>get<ClientSituation>(`/clientes/${encodeURIComponent(id)}/situacion`);
 export const clientMachines=(id:string)=>get<ClientHolding[]>(`/clientes/${encodeURIComponent(id)}/maquinas`);
 export const clientMovements=(id:string,desde:string,hasta:string,pagina:number)=>get<ClientHistory>(`/clientes/${encodeURIComponent(id)}/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}&pagina=${pagina}&tamanio=20`);
+
+export const adminDashboard=(desde:string,hasta:string)=>get<import('./AdminDashboard').DashboardSummary>(`/admin/dashboard/resumen?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`);

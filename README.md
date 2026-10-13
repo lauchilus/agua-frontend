@@ -1,3 +1,28 @@
+AGUA 0.16 — Resumen administrativo
+
+Actualización solo de frontend, sin migraciones ni cambios de backend.
+Detené Vite con Ctrl+C y copiá agua-frontend sobre tu carpeta actual, conservando .env y .git.
+Dentro de esa carpeta:
+npm.cmd ci
+npm.cmd run dev
+
+Prueba:
+1. Ingresá como admin.
+2. Administración · Resumen > Ver resumen administrativo.
+3. Elegí Desde y Hasta, luego Consultar resumen.
+4. Compará facturado (ventas + abonos), cobrado y gastado con tus operaciones.
+5. Revisá cobros y gastos por efectivo, transferencia y Mercado Pago.
+6. Deudas, saldos a favor, envases y máquinas son actuales: no se filtran por período.
+7. Probá un período vacío; los importes del período deben ser cero, conservando la situación actual.
+8. Ingresá como repartidor y verificá que no vea el resumen administrativo.
+Esta pantalla consulta datos; no modifica operaciones ni genera cobros.
+No es un cálculo de ganancias ni conciliación bancaria. Los gastos incluyen jornadas y generales.
+
+Después de verificar:
+git add .
+git commit -m "feat: resumen administrativo por periodo"
+
+
 AGUA 0.15 — Ficha de cuenta del cliente
 
 Solo frontend. Sin cambios de backend ni migraciones.
