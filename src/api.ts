@@ -210,3 +210,9 @@ export const clientMachines=(id:string)=>get<ClientHolding[]>(`/clientes/${encod
 export const clientMovements=(id:string,desde:string,hasta:string,pagina:number)=>get<ClientHistory>(`/clientes/${encodeURIComponent(id)}/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}&pagina=${pagina}&tamanio=20`);
 
 export const adminDashboard=(desde:string,hasta:string)=>get<import('./AdminDashboard').DashboardSummary>(`/admin/dashboard/resumen?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`);
+
+export const adminJourneys=(filter:import('./JourneyHistory').JourneyFilter,page:number)=>{
+ const q=new URLSearchParams({desde:filter.desde,hasta:filter.hasta,fechaPor:filter.fechaPor,pagina:String(page),tamanio:'20'});
+ if(filter.estado)q.set('estado',filter.estado);
+ return get<import('./JourneyHistory').JourneyHistoryPage>(`/admin/jornadas?${q}`);
+};

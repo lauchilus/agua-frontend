@@ -719,3 +719,5 @@ select:focus-visible {
 .report-metric{padding:16px;border:1px solid #dce7eb;border-radius:12px;background:#f5fafb;display:flex;flex-direction:column;gap:8px}
 .report-metric strong{font-size:1.3rem;overflow-wrap:anywhere;color:#164754}
 .report-table{overflow-x:auto}.report-table table{width:100%;border-collapse:collapse}.report-table th,.report-table td{padding:12px;text-align:right;border-bottom:1px solid #dce7eb;white-space:nowrap}.report-table th:first-child{text-align:left}
+
+.history-value{display:block;margin-top:8px;overflow-wrap:anywhere}

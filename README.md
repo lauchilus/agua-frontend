@@ -1,3 +1,29 @@
+AGUA 0.17 — Historial administrativo de jornadas
+
+Solo frontend; sin cambios en backend ni base de datos.
+Detené Vite con Ctrl+C. Copiá agua-frontend sobre tu carpeta actual conservando .env y .git.
+Dentro de la carpeta:
+npm.cmd ci
+npm.cmd run dev
+
+Pruebas:
+1. Admin > Administración · Historial de jornadas > Buscar jornadas anteriores.
+2. Elegí fechas y estado, pulsá Consultar jornadas.
+3. Fecha de la jornada filtra por el día de reparto.
+4. Fecha del cierre filtra por el día en que se cerró, en Buenos Aires, y muestra solo cerradas.
+5. Verificá camioneta, patente, repartidor, efectivo esperado, contado y diferencia.
+6. Las abiertas no muestran valores de cierre; indican Sin cierre registrado.
+7. Faltante es diferencia negativa, sobrante positiva y cero indica Sin diferencia.
+8. Más jornadas pagina de a 20 conservando los filtros consultados.
+9. El repartidor no ve este historial administrativo.
+Es una consulta: no reabre ni modifica jornadas. No realiza conciliación bancaria.
+Validación: compilación y 76 pruebas automáticas (API simulada en pruebas de interfaz).
+
+Después de probar:
+git add .
+git commit -m "feat: historial administrativo de jornadas"
+
+
 AGUA 0.16 — Resumen administrativo
 
 Actualización solo de frontend, sin migraciones ni cambios de backend.
