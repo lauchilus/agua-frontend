@@ -1,31 +1,3 @@
-AGUA 0.23 — Reporte de envases en clientes
-
-Solo frontend, sin backend ni migraciones.
-Detené Vite, copiá agua-frontend conservando .env y .git:
-npm.cmd ci
-npm.cmd run dev
-
-Admin > Reportes > Envases en clientes > Ver envases en clientes.
-Buscar por nombre, elegir producto y estado del cliente; pulsar Consultar envases.
-Totales para todo el filtro; páginas de 20 filas.
-Una fila por cliente y producto. El total de clientes cuenta personas distintas.
-Muestra tenencias actuales mayores a cero, no movimientos históricos ni deuda monetaria.
-Descargar Excel completo respeta los filtros consultados y recorre todas las páginas.
-La identidad de cada fila es cliente + producto; un cliente puede tener ambos tamaños.
-No se cambia ninguna cantidad desde este reporte.
-El repartidor no ve este reporte administrativo.
-
-Prueba:
-1. Consultar todos los productos.
-2. Filtrar Bidón de 12 y luego Bidón de 20.
-3. Buscar un cliente y comparar con su ficha.
-4. Descargar Excel y revisar cantidades y teléfonos.
-5. Probar un filtro sin resultados y verificar totales cero.
-
-git add .
-git commit -m "feat: reporte y Excel de envases en clientes"
-
-
 AGUA 0.22 — Exportación Excel de reportes
 
 Solo frontend, sin backend ni migraciones.

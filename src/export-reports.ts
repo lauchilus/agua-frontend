@@ -1,4 +1,4 @@
-import {containersReport,accountsReport,adminJourneys,clientMovements,type ExpenseReport} from './api';
+import {accountsReport,adminJourneys,clientMovements,type ExpenseReport} from './api';
 import type {AccountsFilter} from './AccountsReport';
 import type {JourneyFilter} from './JourneyHistory';
 import type {TableExport} from './report-xlsx';
@@ -25,9 +25,4 @@ export function exportExpenses(r:ExpenseReport):TableExport{return {title:'AGUA 
 export async function exportClient(id:string,name:string,desde:string,hasta:string):Promise<TableExport>{
  const {first,rows}=await allPages(p=>clientMovements(id,desde,hasta,p),(r)=>r.operacionId);
  return {title:'AGUA · Movimientos de '+name,notes:[...note(),'Cliente ID: '+id,'Desde '+desde+' hasta '+hasta,'Saldo actual (ARS): '+first.saldoActual+'; no es saldo histórico de cierre.','Los cobros reducen deuda y figuran con signo negativo.'],headers:['Fecha (Buenos Aires)','Tipo','Importe (ARS)','Saldo resultante (ARS)','ID operación','ID jornada'],rows:rows.map(m=>[stamp(m.creadoEn),m.tipo,m.importe,m.saldoResultante,m.operacionId,m.jornadaId])};
-}
-
-export async function exportContainers(f:import('./ContainersReport').ContainersFilter):Promise<TableExport>{
- const {first,rows}=await allPages(p=>containersReport(f,p),r=>r.clienteId+':'+r.productoId);
- return {title:'AGUA · Envases en clientes',notes:[...note(),'Tenencias actuales mayores a cero. Una fila por cliente y producto.','Búsqueda: '+(f.busqueda.trim()||'Todas')+'; producto ID: '+(f.productoId||'Todos')+'; activos: '+(f.activo||'Todos'),'Clientes: '+first.totales.cantidadClientes+'; envases: '+first.totales.cantidadEnvases],headers:['Cliente','Teléfono','Activo','Producto','Código','Cantidad de envases','ID cliente','ID producto'],rows:rows.map(c=>[c.clienteNombre,c.telefono,c.activo?'Sí':'No',c.productoNombre,c.codigo,c.cantidad,c.clienteId,c.productoId])};
 }

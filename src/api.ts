@@ -235,10 +235,3 @@ export const accountsReport=(filter:import('./AccountsReport').AccountsFilter,pa
  if(filter.activo!=='')q.set('activo',filter.activo);
  return get<import('./AccountsReport').AccountsPage>(`/admin/clientes/cuentas?${q}`);
 };
-
-export const containersReport=(filter:import('./ContainersReport').ContainersFilter,page:number)=>{
- const q=new URLSearchParams({busqueda:filter.busqueda.trim(),pagina:String(page),tamanio:'20'});
- if(filter.activo!=='')q.set('activo',filter.activo);
- if(filter.productoId)q.set('productoId',filter.productoId);
- return get<import('./ContainersReport').ContainersPage>(`/admin/clientes/envases?${q}`);
-};
