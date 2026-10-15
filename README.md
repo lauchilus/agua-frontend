@@ -1,3 +1,107 @@
+AGUA 0.23 — Reporte de envases en clientes
+
+Solo frontend, sin backend ni migraciones.
+Detené Vite, copiá agua-frontend conservando .env y .git:
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Reportes > Envases en clientes > Ver envases en clientes.
+Buscar por nombre, elegir producto y estado del cliente; pulsar Consultar envases.
+Totales para todo el filtro; páginas de 20 filas.
+Una fila por cliente y producto. El total de clientes cuenta personas distintas.
+Muestra tenencias actuales mayores a cero, no movimientos históricos ni deuda monetaria.
+Descargar Excel completo respeta los filtros consultados y recorre todas las páginas.
+La identidad de cada fila es cliente + producto; un cliente puede tener ambos tamaños.
+No se cambia ninguna cantidad desde este reporte.
+El repartidor no ve este reporte administrativo.
+
+Prueba:
+1. Consultar todos los productos.
+2. Filtrar Bidón de 12 y luego Bidón de 20.
+3. Buscar un cliente y comparar con su ficha.
+4. Descargar Excel y revisar cantidades y teléfonos.
+5. Probar un filtro sin resultados y verificar totales cero.
+
+git add .
+git commit -m "feat: reporte y Excel de envases en clientes"
+
+
+AGUA 0.22 — Exportación Excel de reportes
+
+Solo frontend, sin backend ni migraciones.
+Detené Vite, copiá agua-frontend conservando .env y .git:
+npm.cmd ci
+npm.cmd run dev
+
+EXPORTACIONES
+- Reportes > Cuentas: consultar filtros > Descargar Excel completo.
+  Para deudores elegí Deudores y pulsá Consultar cuentas antes de descargar.
+  Incluye todos los clientes filtrados, aunque haya varias páginas.
+- Reportes > Historial de jornadas: consultar período y estado > Descargar Excel completo.
+  Incluye todas las páginas, efectivo esperado, contado y diferencia.
+- Gastos > reporte por categoría: consultar fechas > Descargar Excel completo.
+  Exporta los grupos de categoría, ámbito y medio, con cantidades e importes.
+- Ficha del cliente > consultar historial > Descargar Excel completo.
+  Exporta todos los movimientos del período; no incluye el detalle de envases y máquinas.
+- Resumen administrativo: conserva Descargar Excel con gráficos.
+
+ALCANCE
+Los filtros exportados son los de la consulta aplicada, no cambios aún sin consultar.
+Cuentas, jornadas e historial del cliente se vuelven a consultar al descargar.
+Resumen y gastos exportan la consulta mostrada.
+Cada XLSX incluye título, contexto/filtros y fecha de generación.
+Los archivos tabulares tienen encabezados inmovilizados y autofiltro.
+Importes son números; textos se exportan literalmente; campos sin dato quedan vacíos.
+Los saldos negativos son a favor y las diferencias negativas de cierre son faltantes.
+Solo el resumen incluye gráficos; los demás son listados completos.
+La exportación paginada detecta cambios de cantidad o IDs duplicados y no entrega un archivo parcial.
+No es una instantánea transaccional única entre páginas; si otros usuarios modifican datos durante la descarga, consultá nuevamente.
+No requiere instalar Excel ni bibliotecas adicionales en el servidor.
+
+PRUEBA
+1. Filtrar deudores y descargar. Comparar filas, nombres y saldos.
+2. Si hay más de 20, verificar que estén incluidos todos.
+3. Cambiar un filtro sin consultar y descargar: debe mantener la consulta aplicada.
+4. Descargar jornadas, gastos e historial del cliente.
+5. Abrir los archivos en Excel y probar ordenar/filtrar.
+Validación: compilación, 94 pruebas automáticas y lectura independiente del formato XLSX.
+
+git add .
+git commit -m "feat: exportacion Excel completa de reportes"
+
+
+AGUA 0.21 — Reporte de cuentas de clientes
+
+Solo frontend, sin cambios de backend ni base de datos.
+Detené Vite, copiá agua-frontend conservando .env y .git y ejecutá:
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Reportes > Cuentas de clientes > Ver cuentas de clientes.
+Buscá por nombre y filtrá por:
+- Todos, deudores, saldo a favor o saldados.
+- Activos, inactivos o todos.
+Consultar cuentas muestra totales de todo el filtro y páginas de 20 clientes.
+Más cuentas conserva los filtros de la última consulta.
+Consultar ficha abre saldo, tenencias e historial del cliente; pulsá Consultar cuenta para cargarlo.
+Es información actual, sin filtro de período para saldos.
+Los saldos a favor se presentan en positivo con su etiqueta.
+Este reporte no registra cobros. Los cobros siguen en Reparto.
+El repartidor no tiene acceso a este reporte administrativo.
+No se cambia el alcance del Excel del resumen en este paso.
+
+Prueba:
+- Consultar todos, luego deudores y saldo a favor.
+- Comparar totales con el resumen administrativo sin filtros.
+- Abrir la ficha de un cliente y consultar su historial.
+- Verificar navegación entre páginas si hay más de 20 clientes.
+- Ingresar como repartidor y verificar que no vea Reportes.
+Build y 91 pruebas aprobadas.
+
+git add .
+git commit -m "feat: reporte de cuentas de clientes"
+
+
 AGUA 0.20 — Navegación por secciones
 
 Solo frontend. Detené Vite y copiá agua-frontend conservando .env y .git.

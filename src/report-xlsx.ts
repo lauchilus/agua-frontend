@@ -33,3 +33,20 @@ export function reportXlsx(d:DashboardSummary,generated=new Date().toISOString()
  return zip(f);
 }
 export function downloadReport(d:DashboardSummary){const bytes=reportXlsx(d);const url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const link=document.createElement('a');link.href=url;link.download='agua-resumen-'+d.periodo.desde+'-'+d.periodo.hasta+'.xlsx';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+export interface TableExport {title:string;notes:string[];headers:string[];rows:(string|number|null)[][]}
+export function tableXlsx(t:TableExport){
+ const headersRow=t.notes.length+3;
+ const rows:Cell[][]=[[t.title],...t.notes.map(n=>[n]),[],t.headers,...t.rows.map(r=>r.map(v=>v??''))];
+ const f:Record<string,string>={};
+ f['[Content_Types].xml']=decl+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
+ f['_rels/.rels']=rel([['rId1','officeDocument','xl/workbook.xml']]);
+ f['xl/workbook.xml']=decl+'<workbook xmlns="'+ns+'" xmlns:r="'+relns+'"><sheets><sheet name="Reporte" sheetId="1" r:id="rId1"/></sheets></workbook>';
+ f['xl/_rels/workbook.xml.rels']=rel([['rId1','worksheet','worksheets/sheet1.xml'],['rId2','styles','styles.xml']]);
+ f['xl/styles.xml']=decl+'<styleSheet xmlns="'+ns+'"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF164754"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+ // Inline strings keep user-supplied text literal, including leading "=".
+ const col=(n:number)=>{let s='';for(n++;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;};
+ f['xl/worksheets/sheet1.xml']=decl+'<worksheet xmlns="'+ns+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="'+headersRow+'" topLeftCell="A'+(headersRow+1)+'" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+t.headers.map((h,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+(h.includes('ID')?38:i===0?42:25)+'" customWidth="1"/>').join('')+'</cols><sheetData>'+rows.map((r,i)=>'<row r="'+(i+1)+'">'+r.map((v,j)=>{const ref=col(j)+(i+1);if(typeof v==='number'){if(!Number.isFinite(v))throw Error('Valor numérico inválido en el reporte.');return '<c r="'+ref+'"><v>'+v+'</v></c>';}return '<c r="'+ref+'" s="'+(i===0||i+1===headersRow?'1':'0')+'" t="inlineStr"><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join('')+'</row>').join('')+'</sheetData><autoFilter ref="A'+headersRow+':'+col(t.headers.length-1)+rows.length+'"/></worksheet>';
+ return zip(f);
+}
+export function downloadTable(table:TableExport,name:string){const bytes=tableXlsx(table);const url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const link=document.createElement('a');link.href=url;link.download=name+'.xlsx';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}

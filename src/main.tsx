@@ -1,3 +1,5 @@
+import {ContainersReport} from './ContainersReport';
+import {AccountsReport} from './AccountsReport';
 import {GeneralExpenses} from './GeneralExpenses';
 import {FleetAdmin} from './FleetAdmin';
 import {JourneyHistory} from './JourneyHistory';
@@ -219,6 +221,8 @@ function App() {
           </nav>
           <div class="area-content" hidden={area!=="reportes"} data-area="reportes">
           {user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}
+          {user.roles.includes("ROLE_ADMIN") && <ContainersReport key={user.username} busy={busy} setWorking={setBusy}/>}
+          {user.roles.includes("ROLE_ADMIN") && <AccountsReport key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <JourneyHistory key={user.username} busy={busy} setWorking={setBusy}/>}
           </div>
           <div class="area-content" hidden={area!=="clientes"} data-area="clientes">
@@ -583,7 +587,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.20</span>
+        AGUA · Reparto y administración <span>Versión 0.23</span>
       </footer>
     </div>
   );

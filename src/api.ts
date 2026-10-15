@@ -229,3 +229,16 @@ export const createDriver=(nombre:string,username:string,password:string)=>postJ
 
 export interface ExpenseReport {desde:string;hasta:string;total:number;filas:{categoriaId:string;categoriaNombreActual:string;ambito:string;medio:string;cantidadGastos:number;importe:number}[]}
 export const expenseReport=(desde:string,hasta:string)=>get<ExpenseReport>(`/admin/gastos/resumen?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`);
+
+export const accountsReport=(filter:import('./AccountsReport').AccountsFilter,page:number)=>{
+ const q=new URLSearchParams({busqueda:filter.busqueda.trim(),situacion:filter.situacion,pagina:String(page),tamanio:'20'});
+ if(filter.activo!=='')q.set('activo',filter.activo);
+ return get<import('./AccountsReport').AccountsPage>(`/admin/clientes/cuentas?${q}`);
+};
+
+export const containersReport=(filter:import('./ContainersReport').ContainersFilter,page:number)=>{
+ const q=new URLSearchParams({busqueda:filter.busqueda.trim(),pagina:String(page),tamanio:'20'});
+ if(filter.activo!=='')q.set('activo',filter.activo);
+ if(filter.productoId)q.set('productoId',filter.productoId);
+ return get<import('./ContainersReport').ContainersPage>(`/admin/clientes/envases?${q}`);
+};
