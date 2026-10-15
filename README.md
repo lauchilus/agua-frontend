@@ -1,3 +1,91 @@
+AGUA 0.25 — Resumen de cierres de caja
+
+Solo frontend; sin cambios de backend ni migraciones.
+Detené Vite y copiá agua-frontend conservando .env y .git.
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Reportes > Resumen de cierres de caja > Ver resumen de cierres.
+Elegí período y fecha de cierre o de jornada; Consultar cierres.
+Muestra jornadas encontradas, cierres registrados, cierres con diferencia,
+efectivo esperado/contado, faltantes, sobrantes y diferencia neta.
+También muestra cobros y gastos por medio.
+Descargar Excel completo exporta la consulta mostrada, con cantidades e importes numéricos.
+
+Los importes son sumas de cierres registrados: no incluyen jornadas sin cierre ni gastos generales.
+La suma de efectivo esperado incluye el fondo inicial de cada jornada.
+No representa dinero disponible acumulado ni conciliación bancaria.
+Neto cero puede incluir faltantes y sobrantes: ambos se muestran separados.
+Fecha de cierre usa Buenos Aires; fecha de jornada usa el día de reparto.
+Para revisar jornadas individuales, usar Historial de jornadas.
+
+Prueba:
+1. Consultar octubre de 2026 por fecha de cierre y comparar con cierres existentes.
+2. Cambiar a fecha de jornada y verificar fechas.
+3. Descargar Excel.
+4. Consultar un período sin cierres.
+5. El repartidor no debe ver este reporte administrativo.
+
+git add .
+git commit -m "feat: resumen y Excel de cierres de caja"
+
+
+AGUA 0.24 — Ventas por producto y Excel
+
+Solo frontend, sin cambios de backend ni migraciones.
+Detené Vite, copiá agua-frontend conservando .env y .git:
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Reportes > Ventas por producto > Ver ventas por producto.
+Elegí desde, hasta y producto; Consultar ventas.
+Muestra entregadas, incluidas en abonos, facturadas aparte, vacíos, dañados e importe.
+El importe no equivale a cobros recibidos y excluye los cargos mensuales de abonos.
+La fecha usada es el registro de la entrega en Buenos Aires.
+Operaciones incluye devoluciones sin venta.
+Clientes y operaciones totales son distintos; no sumar cantidades por producto para obtenerlos.
+Descargar Excel completo exporta la consulta mostrada, con todos los productos del resultado.
+El archivo incluye importes numéricos y columnas para ordenar y filtrar.
+
+Prueba:
+1. Consultar octubre de 2026 y comparar con las entregas de prueba.
+2. Filtrar Bidón 12 y Bidón 20.
+3. Probar un período vacío.
+4. Descargar Excel y comparar unidades, importes y devoluciones.
+5. Verificar que el repartidor no vea este reporte.
+
+git add .
+git commit -m "feat: reporte y Excel de ventas por producto"
+
+
+AGUA 0.23 — Reporte de envases en clientes
+
+Solo frontend, sin backend ni migraciones.
+Detené Vite, copiá agua-frontend conservando .env y .git:
+npm.cmd ci
+npm.cmd run dev
+
+Admin > Reportes > Envases en clientes > Ver envases en clientes.
+Buscar por nombre, elegir producto y estado del cliente; pulsar Consultar envases.
+Totales para todo el filtro; páginas de 20 filas.
+Una fila por cliente y producto. El total de clientes cuenta personas distintas.
+Muestra tenencias actuales mayores a cero, no movimientos históricos ni deuda monetaria.
+Descargar Excel completo respeta los filtros consultados y recorre todas las páginas.
+La identidad de cada fila es cliente + producto; un cliente puede tener ambos tamaños.
+No se cambia ninguna cantidad desde este reporte.
+El repartidor no ve este reporte administrativo.
+
+Prueba:
+1. Consultar todos los productos.
+2. Filtrar Bidón de 12 y luego Bidón de 20.
+3. Buscar un cliente y comparar con su ficha.
+4. Descargar Excel y revisar cantidades y teléfonos.
+5. Probar un filtro sin resultados y verificar totales cero.
+
+git add .
+git commit -m "feat: reporte y Excel de envases en clientes"
+
+
 AGUA 0.22 — Exportación Excel de reportes
 
 Solo frontend, sin backend ni migraciones.
