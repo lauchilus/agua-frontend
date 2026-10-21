@@ -1,3 +1,81 @@
+AGUA 0.27 — Consulta de jornada sin conexión
+
+ALCANCE
+Primera etapa offline: la aplicación puede abrirse sin internet y consultar
+una copia protegida con PIN de clientes, saldos, envases, máquinas, cupos y stock.
+Las entregas, cobros, altas, gastos y cierres todavía requieren conexión.
+La copia es una foto de los datos descargados: no se actualiza automáticamente.
+No es la cola de sincronización ni reemplaza las operaciones pendientes existentes.
+
+INSTALACION — SOLO FRONTEND
+1. Detener Vite.
+2. Copiar agua-frontend sobre tu carpeta actual, conservando .env y .git.
+3. Dentro de agua-frontend ejecutar en PowerShell, una línea por comando:
+npm.cmd ci
+npm.cmd run build
+npm.cmd run preview
+4. Dejar la consola de preview abierta. Mantener el backend iniciado.
+5. Abrir exactamente http://localhost:4173/ (usar siempre este mismo origen).
+6. Esperar unos segundos y recargar una vez para completar la preparación.
+
+npm.cmd run dev sigue disponible para desarrollo, pero no instala la versión offline.
+La copia guardada en localhost:4173 no se comparte con localhost:5173,
+127.0.0.1 ni con otra PC o navegador. Cada dispositivo necesita su propia preparación.
+No hay cambios en el backend ni nuevas migraciones en esta entrega.
+
+PRUEBA EN LA PC
+1. Ingresar con conexión y seleccionar una jornada ABIERTA.
+2. En Reparto, buscar Preparar consulta sin conexión.
+3. Elegir un PIN de 6 a 12 números, repetirlo y guardar la copia.
+4. Esperar el mensaje Copia protegida guardada.
+5. Salir de la cuenta. Abrir Consultar copia sin conexión con el PIN.
+6. Verificar clientes, saldos, envases, máquinas, cupos y stock.
+7. Para simular la caída total, detener backend y preview y recargar la página.
+   Tiene que abrirse la aplicación desde la copia del navegador.
+8. Volver a abrir la copia con el PIN. Buscar un cliente y revisar sus datos.
+9. Reiniciar backend y npm.cmd run preview para volver al funcionamiento online.
+
+En esta prueba no ingresar entregas ni cobros nuevos sin conexión.
+Desactivar solo el Wi-Fi de la PC no corta localhost; detener los servidores
+permite verificar que realmente abre la aplicación guardada.
+
+DATOS Y PIN
+Solo se conserva una copia de jornada por navegador/origen. Preparar otra la reemplaza.
+El PIN protege con cifrado los datos de la copia; no se guarda la contraseña de acceso.
+Se conserva el nombre de usuario y la fecha como identificación de la copia.
+Usar un dispositivo propio con bloqueo de pantalla. No usar PIN obvios en datos reales.
+Si se olvida el PIN, ingresar online y preparar una nueva copia.
+Salir de la cuenta no elimina la copia: ese es el objetivo de la consulta offline.
+Bloquear copia oculta los datos hasta volver a ingresar el PIN.
+Eliminar esta copia borra solo la copia offline, no las operaciones pendientes.
+Si se borran los datos del navegador, se pierde la copia y también podrían perderse
+operaciones pendientes del flujo existente. No borrar el almacenamiento para actualizar.
+
+ACTUALIZACIONES
+Después de instalar una nueva versión, volver a compilar, iniciar preview,
+abrir con conexión y cerrar todas las pestañas/ventanas de AGUA; luego volver a abrir.
+No se fuerza la actualización de una pantalla mientras se está usando.
+Confirmar la versión en el pie y volver a preparar la copia si cambió la jornada.
+
+CELULAR U OTRA PC
+El modo offline necesita HTTPS fuera de localhost. No alcanza abrir http://IP:4173.
+La configuración HTTPS y la prueba entre dispositivos serán otro paso;
+esta entrega no expone el servidor a la red ni cambia el firewall.
+
+Git:
+git add .
+git commit -m "feat: consulta de jornada sin conexion con copia protegida"
+
+VALIDACION
+Compilacion y 110 pruebas automatizadas aprobadas. Incluyen PIN incorrecto,
+copia cifrada, falta de espacio, no borrar operaciones pendientes, consulta
+sin llamadas a API y fallback del service worker con red simulada caida.
+La prueba completa en navegador real queda para la PC local; el entorno de
+validacion bloqueo el arranque de Chromium. No se probo aun en celular.
+
+
+--- Versiones anteriores ---
+
 AGUA 0.26 — Entrega de copas
 
 Incluye el frontend completo y un parche de backend. Aplicar ambos.

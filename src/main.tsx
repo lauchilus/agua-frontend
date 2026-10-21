@@ -1,3 +1,4 @@
+import {PrepareOffline,OfflineReader} from "./Offline";
 import {ClosingReport} from './ClosingReport';
 import {SalesReport} from './SalesReport';
 import {ContainersReport} from './ContainersReport';
@@ -206,6 +207,7 @@ function App() {
               La contraseña no se guarda en el almacenamiento de la aplicación.
             </small>
           </form>
+          <OfflineReader/>
         </main>
       ) : (
         <main class="workspace">
@@ -216,7 +218,7 @@ function App() {
                 {area==="reparto"?(data ? "Tu jornada de reparto" : "Comencemos la jornada"):({clientes:"Gestión de clientes",reportes:"Reportes del negocio",gastos:"Gastos del negocio",admin:"Administración"})[area]}
               </h1>
             </div>
-            <span class="pill">Entregas y cobros · Con conexión</span>
+            <span class="pill">Entregas y cobros · Requieren conexión</span>
           </div>
           <nav class="main-nav" aria-label="Navegación principal">
             {[["reparto","Reparto"],["clientes","Clientes"],...(user.roles.includes("ROLE_ADMIN")?[["reportes","Reportes"],["gastos","Gastos"],["admin","Administración"]]:[])].map(([value,label])=><button key={value} class={area===value?"active":""} aria-current={area===value?"page":undefined} disabled={busy} onClick={()=>setArea(value)}>{label}</button>)}
@@ -250,6 +252,7 @@ function App() {
           )}
           </div>
           <div class="area-content" hidden={area!=="reparto"} data-area="reparto">
+          {data?.jornada.estado==="ABIERTA" && <PrepareOffline username={user.username} jornadaId={data.jornada.id} busy={busy} setWorking={setBusy}/>}
           <JourneyActions
             key={user.username}
             user={user}
@@ -591,9 +594,13 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.26</span>
+        AGUA · Reparto y administración <span>Versión 0.27</span>
       </footer>
     </div>
   );
 }
 render(<App />, document.getElementById("app")!);
+
+if(import.meta.env.PROD && "serviceWorker" in navigator && window.isSecureContext) {
+ window.addEventListener("load",()=>{void navigator.serviceWorker.register("/sw.js").catch(()=>{/* La preparación informa si no hay una versión offline activa. */});});
+}

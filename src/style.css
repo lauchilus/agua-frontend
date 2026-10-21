@@ -729,3 +729,7 @@ select:focus-visible {
 .area-content[hidden]{display:none!important}
 .area-content:not([hidden]){display:grid;gap:20px}
 @media(max-width:480px){.main-nav{gap:6px}.main-nav button{flex-basis:calc(50% - 6px);font-size:.9rem}}
+
+.login-layout > .offline-reader { grid-column: 1 / -1; }
+.offline-client { display: block; width: 100%; margin: .5rem 0; text-align: left; }
+.offline-prepare .form-wrapper { display: grid; gap: .75rem; }
