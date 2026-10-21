@@ -294,7 +294,7 @@ function OperationForm({
     [localError, setLocalError] = useState("");
   const [rows, setRows] = useState<DraftItem[]>(
     data.productos
-      .filter((p) => p.activo && p.tipo === "BIDON")
+      .filter((p) => p.activo && (p.tipo === "BIDON" || p.tipo === "COPA"))
       .map((p) => ({
         productoId: p.id,
         entregados: "0",
@@ -425,14 +425,13 @@ function OperationForm({
                   <div>
                     <b>{s.nombre}</b>
                     <small>
-                      {s.entregados} entregados · {s.vacios} vacíos devueltos ·{" "}
-                      {s.danados} dañados devueltos
+                      {s.entregados} entregados{s.retornable && <> · {s.vacios} vacíos devueltos · {s.danados} dañados devueltos</>}
                     </small>
-                    <small>
+                    {s.retornable && <small>
                       {s.incluidos} incluidos en abono · {s.facturados}{" "}
                       facturados
-                    </small>
-                    <small>Envases resultantes: {s.envases}</small>
+                    </small>}
+                    {s.retornable ? <small>Envases resultantes: {s.envases}</small> : <small>No retornable · No consume el abono</small>}
                   </div>
                   <b>{money(s.subtotal)}</b>
                 </div>
@@ -518,18 +517,18 @@ function OperationForm({
                   const p = data.productos.find((p) => p.id === r.productoId)!;
                   const stock =
                     data.stockJornada.find(
-                      (s) => s.productoId === p.id && s.estado === "LLENO",
+                      (s) => s.productoId === p.id && s.estado === (p.tipo === "COPA" ? "DISPONIBLE" : "LLENO"),
                     )?.cantidad ?? 0;
                   return (
                     <fieldset key={p.id}>
                       <legend>{p.nombre}</legend>
-                      <small>Stock lleno en jornada: {stock}</small>
+                      <small>Stock {p.tipo === "COPA" ? "disponible" : "lleno"} en jornada: {stock}</small>
                       <div class="quantity-fields">
                         {[
                           ["entregados", "Entregados"],
                           ["vacios", "Vacíos devueltos"],
                           ["danados", "Dañados devueltos"],
-                        ].map(([f, label]) => (
+                        ].filter(([f]) => p.tipo !== "COPA" || f === "entregados").map(([f, label]) => (
                           <label key={f}>
                             {label}
                             <input
@@ -552,7 +551,7 @@ function OperationForm({
                       <details>
                         <summary>Precio excepcional para esta entrega</summary>
                         <label>
-                          Precio por bidón fuera del abono
+                          {p.tipo === "COPA" ? "Precio por copa" : "Precio por bidón fuera del abono"}
                           <input
                             inputMode="decimal"
                             placeholder="Usar precio habitual"

@@ -72,6 +72,7 @@ async function setup(options = {}) {
     planesAbono: [],
     itemsPlanesAbono: [],
   };
+  if(options.cups){snap.productos[0]={...snap.productos[0],tipo:"COPA",codigo:"COPA",nombre:"Copa",precioVenta:0};snap.stockJornada[0].estado="DISPONIBLE";snap.envasesClientes=[];}
   if(options.machines){snap.productos.push({id:"m",tipo:"MAQUINA",nombre:"Máquina",activo:true});snap.stockJornada.push({productoId:"m",estado:"DISPONIBLE",cantidad:2});snap.maquinasClientes.push({clienteId:"c",productoId:"m",cantidad:1});snap.clientes[0].tieneAbonoRegistrado=true;}
   let refreshFail = false,
     first = true;
@@ -128,7 +129,7 @@ async function setup(options = {}) {
           total = op.esperadoEntrega.total;
           snap.clientes[0].saldo += total;
           snap.stockJornada[0].cantidad -= req.items[0].entregados;
-          snap.envasesClientes[0].cantidad += req.items[0].entregados;
+          if (!options.cups) snap.envasesClientes[0].cantidad += req.items[0].entregados;
         } else {
           total = req.pagos.reduce((n, p) => n + p.importe, 0);
           snap.clientes[0].saldo -= total;
@@ -382,3 +383,21 @@ test("salir e ingresar recupera solicitud sin guardar contraseña", async () => 
 async function machineAction(x,delivered,returned){x.input('[aria-label="Máquinas a entregar"]',delivered);await wait();x.input('[aria-label="Máquinas a retirar"]',returned);await wait();x.w.document.querySelector('.machine-form').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await wait();x.click('Confirmar máquinas');await wait();await wait();}
 test('máquina perdida reintenta sin duplicar ni cobrar',async()=>{const x=await setup({machines:true,lost:true});try{await machineAction(x,'1','0');assert.equal(x.snap.maquinasClientes[0].cantidad,2);x.click('Reintentar misma solicitud');await wait();await wait();assert.equal(x.bodies[0],x.bodies[1]);assert.equal(x.snap.maquinasClientes[0].cantidad,2);assert.equal(x.snap.stockJornada[1].cantidad,1);assert.equal(x.snap.clientes[0].saldo,3000);assert.match(x.text(),/Movimiento de máquinas confirmado/);assert.doesNotMatch(x.text(),/NaN/);}finally{x.dom.window.close();}});
 test('retiro de máquina vuelve a la jornada sin cambiar deuda',async()=>{const x=await setup({machines:true});try{await machineAction(x,'0','1');assert.equal(x.snap.maquinasClientes[0].cantidad,0);assert.equal(x.snap.stockJornada[1].cantidad,3);assert.equal(x.snap.clientes[0].saldo,3000);}finally{x.dom.window.close();}});
+
+ test("copas: formulario no retornable y entrega sin cargo", async () => {
+   const app = await setup({cups:true});
+   try {
+     const form = app.w.document.querySelector(".operations form");
+     assert.equal(form.querySelectorAll("input[type=number]").length,1);
+     assert.match(form.textContent,/Stock disponible en jornada: 3/);
+     assert.match(form.textContent,/Precio por copa/);
+     assert.doesNotMatch(form.textContent,/Vacíos devueltos/);
+     await app.reviewDelivery();
+     const op=JSON.parse(app.bodies[0]).operaciones[0];
+     assert.equal(op.entrega.items[0].entregados,1);
+     assert.equal(op.entrega.items[0].devueltosVacios,0);
+     assert.equal(op.esperadoEntrega.total,0);
+     assert.equal(app.snap.stockJornada[0].cantidad,2);
+     assert.equal(app.snap.clientes[0].saldo,3000);
+   } finally { app.dom.window.close(); }
+ });

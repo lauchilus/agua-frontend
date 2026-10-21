@@ -135,3 +135,25 @@ test("cobros mixtos y parciales sin errores de decimales", () => {
     payments([{ medio: "EFECTIVO", importe: "0", referencia: "" }]),
   );
 });
+
+test("copas gratis o con precio: stock disponible, sin envases ni abono", () => {
+  const d: any = fixture();
+  d.productos.push({id:"copa",tipo:"COPA",nombre:"Copa",precioVenta:0,activo:true,version:0});
+  d.stockJornada.push({productoId:"copa",estado:"DISPONIBLE",cantidad:2});
+  const copa = {...row("2"),productoId:"copa"};
+  const gratis = delivery(d,client,[copa],"");
+  assert.equal(gratis.total,0);
+  assert.equal(gratis.summary[0].envases,0);
+  assert.equal(gratis.summary[0].retornable,false);
+  assert.equal(gratis.expected[0].incluidosAbono,0);
+  assert.equal(gratis.items[0].precioVersion,0);
+  assert.throws(()=>delivery(d,client,[{...copa,vacios:"1"}],""),/copas/);
+  assert.throws(()=>delivery(d,client,[{...copa,entregados:"3"}],""),/Stock/);
+  d.productos[1].precioVenta=200;
+  assert.equal(delivery(d,client,[copa],"").total,400);
+  assert.equal(delivery(d,client,[{...copa,precio:"150",motivo:"Promoción"}],"").total,300);
+  const mixed = delivery(d,client,[row("5"),copa],"plan");
+  assert.equal(mixed.total,15900);
+  assert.equal(mixed.expected[0].incluidosAbono,4);
+  assert.equal(mixed.expected[1].incluidosAbono,0);
+});

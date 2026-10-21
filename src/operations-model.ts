@@ -101,6 +101,7 @@ export function delivery(
       facturados: number;
       subtotal: number;
       envases: number;
+      retornable: boolean;
     }[] = [];
   for (const row of rows) {
     const delivered = integer(row.entregados || "0"),
@@ -108,12 +109,15 @@ export function delivery(
       damaged = integer(row.danados || "0");
     if (!delivered && !empty && !damaged) continue;
     const product = data.productos.find(
-      (p) => p.id === row.productoId && p.activo && p.tipo === "BIDON",
+      (p) => p.id === row.productoId && p.activo && (p.tipo === "BIDON" || p.tipo === "COPA"),
     );
     if (!product) throw new Error("Producto no disponible.");
+    const retornable = product.tipo === "BIDON";
+    if (!retornable && (empty || damaged))
+      throw new Error("Las copas no admiten devolución de envases.");
     const stock =
       data.stockJornada.find(
-        (s) => s.productoId === product.id && s.estado === "LLENO",
+        (s) => s.productoId === product.id && s.estado === (retornable ? "LLENO" : "DISPONIBLE"),
       )?.cantidad ?? 0;
     if (delivered > stock)
       throw new Error(
@@ -123,7 +127,7 @@ export function delivery(
       data.envasesClientes.find(
         (t) => t.clienteId === client.id && t.productoId === product.id,
       )?.cantidad ?? 0;
-    const resulting = held + delivered - empty - damaged;
+    const resulting = retornable ? held + delivered - empty - damaged : 0;
     if (resulting < 0)
       throw new Error(
         `La devolución de ${product.nombre} supera los envases del cliente.`,
@@ -137,7 +141,7 @@ export function delivery(
             .filter((i) => i.planId === plan.id && i.productoId === product.id)
             .reduce((n, i) => n + i.cantidad, 0)
         : 0);
-    const included = Math.min(delivered, allowance),
+    const included = retornable ? Math.min(delivered, allowance) : 0,
       billed = delivered - included;
     const special = data.preciosClientes.find(
       (p) => p.clienteId === client.id && p.productoId === product.id,
@@ -162,7 +166,7 @@ export function delivery(
       }
     } else if (row.precio.trim())
       throw new Error(
-        "El precio excepcional solo corresponde a bidones entregados.",
+        "El precio excepcional solo corresponde a productos entregados.",
       );
     if (billed && price === null)
       throw new Error(`Falta configurar el precio de ${product.nombre}.`);
@@ -184,6 +188,7 @@ export function delivery(
       facturados: billed,
       subtotal: subtotal / 100,
       envases: resulting,
+      retornable,
     });
   }
   if (!items.length && !plan)

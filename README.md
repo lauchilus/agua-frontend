@@ -1,3 +1,54 @@
+AGUA 0.26 — Entrega de copas
+
+Incluye el frontend completo y un parche de backend. Aplicar ambos.
+
+INSTALACION
+1. Detener backend y Vite.
+2. Copiar el contenido de backend/src dentro de la carpeta src de tu backend,
+   respetando las rutas y reemplazando EntregaService.java.
+   Se agrega V16__entregas_copas.sql: no editar ni borrar migraciones anteriores.
+3. Iniciar el backend desde IntelliJ. Flyway aplica V16 al arrancar.
+4. Copiar agua-frontend sobre tu frontend conservando .env y .git.
+5. Desde PowerShell, dentro de agua-frontend:
+npm.cmd ci
+npm.cmd run dev
+
+COMPORTAMIENTO
+En Reparto > Clientes del reparto > cliente > Entrega aparecen bidones y copas activos.
+Las copas usan stock DISPONIBLE de la camioneta; admiten precio configurado cero.
+Se puede indicar precio excepcional para esa entrega, con motivo.
+No generan envases pendientes ni consumen cupo del abono.
+No tienen campos de vacios/danados devueltos; el backend tambien los rechaza.
+Las maquinas siguen en su flujo de entrega/retiro independiente.
+Las copas aparecen en ventas y en su Excel; una entrega gratis suma unidades,
+pero no aumenta deuda ni caja. Cobrar, si corresponde, sigue siendo otra operacion.
+El precio historico de una entrega confirmada no cambia al editar el precio general.
+Los reintentos conservan la operacion original y no descuentan stock dos veces.
+
+PRUEBA MANUAL
+1. Admin > Administracion > Stock de fabrica: ingresar 3 copas DISPONIBLE
+   si no hay stock. Revisar en Precios que COPA tenga precio 0.
+2. Abrir o seleccionar una jornada y cargar 2 copas a la camioneta.
+3. En el cliente, entregar 1 copa: total $0, deuda sin cambios, stock baja de 2 a 1.
+4. Verificar que no aparezca una copa entre los envases pendientes del cliente.
+5. Entregar la segunda copa con precio excepcional $500 y motivo "Prueba":
+   suma $500 a la deuda y deja stock en cero. No suma efectivo hasta registrar cobro.
+6. Consultar Reportes > Ventas por producto filtrando COPA: 2 unidades, $500.
+   Descargar Excel y comparar. No deben cambiar los cupos del abono.
+7. Intentar otra copa: debe informar stock insuficiente.
+
+Prueba con datos de ensayo; las entregas confirmadas quedan registradas.
+
+Git (ejecutar en cada repositorio modificado):
+git add .
+git commit -m "feat: entrega de copas no retornables"
+
+Las pruebas Java incluidas usan AGUA_TEST_DB_URL, AGUA_TEST_DB_USER y
+AGUA_TEST_DB_PASSWORD, con un esquema aislado. No usan application.yaml.
+
+
+--- Versiones anteriores ---
+
 AGUA 0.25 — Resumen de cierres de caja
 
 Solo frontend; sin cambios de backend ni migraciones.
