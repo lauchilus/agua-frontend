@@ -8,6 +8,7 @@ const dist=new URL('../dist/',import.meta.url);
 test('service worker abre la aplicación sin red y nunca cachea ni intercepta la API',async()=>{
  const handlers={},entries=new Map(),cache={addAll:async urls=>{for(const u of urls)entries.set(u,{body:u})},match:async u=>entries.get(u)};
  vm.runInNewContext(readFileSync(new URL('sw.js',dist),'utf8'),{self:{location:{origin:'http://localhost'},addEventListener:(n,f)=>handlers[n]=f},caches:{open:async()=>cache,keys:async()=>[],delete:async()=>true},URL,fetch:async()=>{throw new Error('offline')}});
+ let version;handlers.message({data:"AGUA_VERSION",ports:[{postMessage:v=>version=v}]});assert.equal(version,"0.29.0");
  let install;handlers.install({waitUntil:p=>install=p});await install;
  assert.ok(entries.has('/index.html'));assert.ok(![...entries.keys()].some(k=>k.startsWith('/api/')));
  let response;handlers.fetch({request:{url:'http://localhost/',method:'GET',mode:'navigate'},respondWith:p=>response=p});assert.deepEqual(await response,{body:'/index.html'});

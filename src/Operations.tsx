@@ -277,7 +277,7 @@ export function Operations({
     </section>
   );
 }
-function OperationForm({
+export function OperationForm({
   data,
   client,
   busy,

@@ -3,3 +3,10 @@ dist/
 .env
 .env.local
 *.local
+
+.certs/
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer

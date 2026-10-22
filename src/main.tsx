@@ -1,3 +1,7 @@
+import {requireCurrentShell} from "./pwa-version";
+import {AutoOperations} from "./AutoOperations";
+import {SyncEngine,claimSession} from "./sync-engine";
+import {JournalStore,hasAutomaticPending} from "./sync-journal";
 import {PrepareOffline,OfflineReader} from "./Offline";
 import {ClosingReport} from './ClosingReport';
 import {SalesReport} from './SalesReport';
@@ -8,8 +12,8 @@ import {FleetAdmin} from './FleetAdmin';
 import {JourneyHistory} from './JourneyHistory';
 import {AdminDashboard} from './AdminDashboard';
 import { render } from "preact";
-import { useState } from "preact/hooks";
-import { cash, clearAuth, download, login } from "./api";
+import { useEffect, useState } from "preact/hooks";
+import { cash, clearAuth, download, login, sendOperation } from "./api";
 import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
 import { JourneyPicker } from "./JourneyPicker";
@@ -35,6 +39,7 @@ const stamp = (s: string) =>
     timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(s));
 function App() {
+  const [engine,setEngine]=useState<SyncEngine|null>(null);
   const [area,setArea]=useState("reparto");
   const [journeyRevision, setJourneyRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null),
@@ -48,15 +53,40 @@ function App() {
     [tab, setTab] = useState("jornada"),
     [search, setSearch] = useState(""),
     [selected, setSelected] = useState<Cliente | null>(null);
+  useEffect(()=>{
+    if(!engine)return;
+    return engine.subscribe(()=>{
+      setBusy(engine.working);
+      try {
+        const view=engine.view();
+        if(view){setError(current=>current.startsWith("Hay operaciones que dependen")?"":current);setData(view.data);setCaja(view.caja);setId(view.data.jornada.id);setSelected(c=>c?view.data.clientes.find(x=>x.id===c.id)??null:null);}
+      } catch { setError("Hay operaciones que dependen del rechazo. Revisá la cola antes de continuar."); }
+    });
+  },[engine]);
   async function signIn(e: Event) {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      setUser(await login(username.trim(), password));
+      await requireCurrentShell();
+      const account=await login(username.trim(), password);
+      if(crypto.subtle && navigator.locks && !localStorage.getItem(`agua.pending.v1.${account.username}`)) {
+        const release=await claimSession(account.username);
+        try {
+          const store=await JournalStore.open(account.username,password);
+          const next=await SyncEngine.open(store,{send:sendOperation,fresh:async target=>({data:await download(target),caja:await cash(target)}),online:()=>navigator.onLine,now:()=>Date.now()},release);
+          setEngine(next);
+          if(next.pending&&next.journal.base){
+            let view=next.journal.base;try{view=next.view()??view;}catch{/* Se resolverá el conflicto antes de registrar otra operación. */}
+            setData(view.data);setCaja(view.caja);setId(view.data.jornada.id);
+          }
+        } catch(e){release();throw e;}
+      } else if(hasAutomaticPending(account.username)) throw Error("Este navegador necesita HTTPS y soporte de almacenamiento seguro para recuperar los pendientes automáticos.");
+      setUser(account);
       setArea("reparto");
     } catch (e) {
+      clearAuth();
       setError((e as Error).message);
     } finally {
       setPassword("");
@@ -67,12 +97,14 @@ function App() {
     setBusy(true);
     setError("");
     try {
+      if(engine?.pending)throw Error("Primero sincronizá las operaciones pendientes.");
       const snapshot = await download(target);
       if (snapshot.versionFormato !== 1)
         throw new Error(
           "Actualizá la aplicación para leer este formato de datos.",
         );
       const balance = await cash(target);
+      if(engine)await engine.replaceBase({data:snapshot,caja:balance});
       setId(target);
       setData(snapshot);
       setCaja(balance);
@@ -87,6 +119,7 @@ function App() {
   async function completeJourney(target: string) {
     const snapshot = await download(target);
     const balance = await cash(target);
+    if(engine)await engine.replaceBase({data:snapshot,caja:balance});
     setId(target);
     setData(snapshot);
     setCaja(balance);
@@ -96,8 +129,10 @@ function App() {
   }
   async function refreshAfterOperation() {
     if (!id) return;
+    if(engine?.pending)throw Error("Primero sincronizá las operaciones pendientes.");
     const snapshot = await download(id);
     const balance = await cash(id);
+    if(engine)await engine.replaceBase({data:snapshot,caja:balance});
     setData(snapshot);
     setCaja(balance);
     setSelected((current) =>
@@ -107,6 +142,8 @@ function App() {
     );
   }
   function logout() {
+    engine?.release();
+    setEngine(null);
     clearAuth();
     setUser(null);
     setData(null);
@@ -218,7 +255,7 @@ function App() {
                 {area==="reparto"?(data ? "Tu jornada de reparto" : "Comencemos la jornada"):({clientes:"Gestión de clientes",reportes:"Reportes del negocio",gastos:"Gastos del negocio",admin:"Administración"})[area]}
               </h1>
             </div>
-            <span class="pill">Entregas y cobros · Requieren conexión</span>
+            <span class="pill">{engine?"Respaldo automático activo":"Operaciones con conexión"}</span>
           </div>
           <nav class="main-nav" aria-label="Navegación principal">
             {[["reparto","Reparto"],["clientes","Clientes"],...(user.roles.includes("ROLE_ADMIN")?[["reportes","Reportes"],["gastos","Gastos"],["admin","Administración"]]:[])].map(([value,label])=><button key={value} class={area===value?"active":""} aria-current={area===value?"page":undefined} disabled={busy} onClick={()=>setArea(value)}>{label}</button>)}
@@ -252,7 +289,7 @@ function App() {
           )}
           </div>
           <div class="area-content" hidden={area!=="reparto"} data-area="reparto">
-          {data?.jornada.estado==="ABIERTA" && <PrepareOffline username={user.username} jornadaId={data.jornada.id} busy={busy} setWorking={setBusy}/>}
+          {!engine?.pending && data?.jornada.estado==="ABIERTA" && <PrepareOffline username={user.username} jornadaId={data.jornada.id} busy={busy} setWorking={setBusy}/>}
           <JourneyActions
             key={user.username}
             user={user}
@@ -264,20 +301,20 @@ function App() {
           <JourneyPicker
             key={user.username + journeyRevision}
             user={user}
-            disabled={busy}
+            disabled={busy||!!engine?.pending}
             currentId={id}
             onSelect={load}
           />
           {data && (
             <button
               class="secondary"
-              disabled={busy}
+              disabled={busy||!!engine?.pending}
               onClick={() => void load(id)}
             >
               {busy ? "Consultando…" : "Actualizar jornada seleccionada"}
             </button>
           )}
-          <Operations
+          {engine ? <AutoOperations engine={engine} data={data} client={selected} externalBusy={busy}/> : <Operations
             key={user.username}
             username={user.username}
             data={data}
@@ -285,7 +322,8 @@ function App() {
             refresh={refreshAfterOperation}
             setWorking={setBusy}
             externalBusy={busy}
-          />
+          />}
+          {!engine&&<p class="muted">Para el respaldo automático usá localhost o HTTPS en un navegador actualizado. Si hay una solicitud de una versión anterior, resolvela y volvé a ingresar.</p>}
           {error && (
             <p class="error" role="alert">
               {error}
@@ -594,7 +632,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.27</span>
+        AGUA · Reparto y administración <span>Versión 0.29</span>
       </footer>
     </div>
   );

@@ -1,3 +1,4 @@
+import {hasAutomaticPending} from "./sync-journal";
 import { useRef, useState } from "preact/hooks";
 import { ApiError, factoryStock, products, postJourney } from "./api";
 import type { FactoryStock, Producto } from "./types";
@@ -124,7 +125,7 @@ export function Factory({
         throw Error("Primero resolvé la solicitud de fábrica pendiente.");
       }
       if (
-        (localStorage.getItem(`agua.clients.pending.v1.${username}`) || localStorage.getItem(`agua.pending.v1.${username}`)) ||
+        (localStorage.getItem(`agua.clients.pending.v1.${username}`) || (hasAutomaticPending(username) || localStorage.getItem(`agua.pending.v1.${username}`))) ||
         localStorage.getItem(`agua.jornada.pending.v1.${username}`)
       )
         throw Error("Primero resolvé la solicitud pendiente del reparto.");
@@ -184,7 +185,7 @@ export function Factory({
         throw Error("Ya hay una solicitud pendiente.");
       }
       if (
-        (localStorage.getItem(`agua.clients.pending.v1.${username}`) || localStorage.getItem(`agua.pending.v1.${username}`)) ||
+        (localStorage.getItem(`agua.clients.pending.v1.${username}`) || (hasAutomaticPending(username) || localStorage.getItem(`agua.pending.v1.${username}`))) ||
         localStorage.getItem(`agua.jornada.pending.v1.${username}`)
       )
         throw Error("Primero resolvé la solicitud pendiente del reparto.");

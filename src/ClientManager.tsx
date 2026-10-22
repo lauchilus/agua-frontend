@@ -1,3 +1,4 @@
+import {hasAutomaticPending} from "./sync-journal";
 import {ClientAccount} from './ClientAccount';
 import {ClientPrices} from './ClientPrices';
 import {useRef,useState} from 'preact/hooks';
@@ -15,7 +16,7 @@ export function ClientManager({username,busy,setWorking,refresh,admin=false}:{ad
  async function list(q:string,p:number){const result=await searchClients(q,p);setRows(result.contenido);setFilter(q);setPage(result.pagina);setMore(result.hayMas);}
  async function open(q='',p=0){if(busy||running.current)return;setWorking(true);setError('');try{setPending(read());await list(q,p);setVisible(true);}catch(e){setError((e as Error).message);}finally{setWorking(false);}}
  function save(p:Pending){localStorage.setItem(key,JSON.stringify(p));setPending(p);}
- function checkOther(){for(const prefix of ['agua.pending.v1.','agua.jornada.pending.v1.','agua.factory.pending.v1.'])if(localStorage.getItem(prefix+username))throw Error('Primero resolvé la solicitud pendiente del reparto o fábrica.');}
+ function checkOther(){if(hasAutomaticPending(username))throw Error("Primero sincronizá las operaciones pendientes.");for(const prefix of ['agua.pending.v1.','agua.jornada.pending.v1.','agua.factory.pending.v1.'])if(localStorage.getItem(prefix+username))throw Error('Primero resolvé la solicitud pendiente del reparto o fábrica.');}
  async function edit(c:ClientRecord){if(busy)return;setWorking(true);setError('');try{const current=await getClient(c.id);setSelected(current);setDraft({nombre:current.nombre,direccion:current.direccion,telefono:current.telefono,observaciones:current.observaciones??''});setReview(false);setEditing(true);}catch(e){setError((e as Error).message);}finally{setWorking(false);}}
  function validate(){for(const [key,max] of [['nombre',150],['direccion',250],['telefono',50],['observaciones',2000]] as const){const text=draft[key].trim();if((key!=='observaciones'&&!text)||text.length>max)throw Error(`Revisá ${key}: máximo ${max} caracteres.`);}return {nombre:draft.nombre.trim(),direccion:draft.direccion.trim(),telefono:draft.telefono.trim(),observaciones:draft.observaciones.trim()||null,version:selected?.version??null};}
  async function execute(p:Pending){if(busy||running.current)return;running.current=true;setWorking(true);setError('');let confirmed=p.status==='confirmed';try{

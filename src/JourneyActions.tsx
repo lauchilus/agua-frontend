@@ -1,3 +1,4 @@
+import {hasAutomaticPending} from "./sync-journal";
 import { useEffect, useRef, useState } from "preact/hooks";
 import {
   ApiError,
@@ -132,7 +133,7 @@ export function JourneyActions({
       if (pending) throw new Error("Primero resolvé la solicitud pendiente.");
       if ((localStorage.getItem(`agua.clients.pending.v1.${user.username}`) || localStorage.getItem(`agua.factory.pending.v1.${user.username}`)))
         throw new Error("Primero resolvé la solicitud pendiente de clientes o fábrica.");
-      if (localStorage.getItem(`agua.pending.v1.${user.username}`))
+      if (hasAutomaticPending(user.username) || localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
       if (kind === "OPEN") {
         const opt = await openingOptions();
@@ -277,7 +278,7 @@ export function JourneyActions({
         setPending(prev.p);
         throw new Error("Ya hay una solicitud pendiente.");
       }
-      if (localStorage.getItem(`agua.pending.v1.${user.username}`))
+      if (hasAutomaticPending(user.username) || localStorage.getItem(`agua.pending.v1.${user.username}`))
         throw new Error("Primero resolvé la entrega o el cobro pendiente.");
       if ((localStorage.getItem(`agua.clients.pending.v1.${user.username}`) || localStorage.getItem(`agua.factory.pending.v1.${user.username}`)))
         throw new Error("Primero resolvé la solicitud pendiente de clientes o fábrica.");

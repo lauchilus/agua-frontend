@@ -1,3 +1,108 @@
+# Novedad 0.29: prueba por HTTPS desde celular u otra PC
+
+Seguí **PRUEBA-LAN.md**. Incluye preparación de certificados, firewall, arranque y prueba de sincronización automática.
+
+AGUA 0.28 — Respaldo y sincronización automáticos del reparto
+
+INSTALACION (SOLO FRONTEND)
+1. Detener Vite/preview y copiar agua-frontend conservando .env y .git.
+2. Dentro de agua-frontend, ejecutar en PowerShell:
+npm.cmd ci
+npm.cmd run build
+npm.cmd run preview
+3. Abrir http://localhost:4173/ con conexión. Cerrar todas las ventanas/pestañas
+   de AGUA y volver a abrir para activar la actualización. Confirmar Versión 0.28.
+4. Ingresar y seleccionar una jornada abierta. No hace falta preparar un PIN
+   para usar el respaldo automático durante la sesión.
+
+COMPORTAMIENTO
+Al seleccionar o actualizar la jornada se guarda automáticamente un respaldo cifrado.
+Cada entrega/devolución de bidones o copas, cobro y movimiento de máquinas se
+GUARDA en el dispositivo ANTES de enviarse. Si no se pudo guardar, no se envía.
+Con conexión se envía inmediatamente. Si falla, queda en cola y permite continuar
+con otras operaciones de esos mismos tipos para clientes ya descargados.
+El stock, saldo del cliente, caja, tenencias y cupos del abono se actualizan localmente
+para incluir las operaciones pendientes. Hasta sincronizar son valores provisionales.
+Los abonos se pueden registrar mediante la entrega; las copas no consumen cupo.
+El servidor registra la fecha/hora al confirmar. Si cambia el mes antes de
+sincronizar, un cambio de cupo o importe puede exigir revisión.
+
+La aplicación reintenta automáticamente mientras está abierta, al volver la conexión
+y con intervalos de 5 a 60 segundos si el servidor tarda en volver.
+No depende solamente del indicador de Wi-Fi: también detecta fallos de la API.
+Conserva el mismo UUID y el mismo contenido en cada reintento.
+Si el servidor confirmó pero falló el refresco, solo vuelve a consultar los datos.
+
+Al día: no quedan operaciones sin resolver.
+Sin conexión / Por sincronizar: hay solicitudes conservadas en el dispositivo.
+Revisar operación: conflicto o rechazo; no se enviaron las siguientes.
+Volvé a ingresar: la sesión o los permisos requieren revisión; no se borra la cola.
+
+El cierre, nuevas cargas, cambios de jornada y cambios de clientes/fábrica quedan
+bloqueados mientras haya operaciones guardadas sin terminar de sincronizar.
+Gastos, altas/ediciones de clientes, apertura/cierre y administración siguen online.
+Se trabaja desde una sola pestaña por usuario en este navegador para evitar carreras.
+Si estás editando un borrador, los reintentos esperan a que lo confirmes o canceles.
+
+CONFLICTOS
+Ver operaciones guardadas muestra el contenido y el motivo del rechazo.
+Se puede resolver la causa en el servidor y reintentar SIN modificar los datos.
+Excluir operación rechazada requiere confirmación y conserva el detalle para revisión.
+Solo puede excluirse un rechazo conocido, nunca una respuesta perdida o incierta.
+Si hubo entrega/cobro real, corregir su registro: excluir no equivale a registrarlo.
+Las operaciones siguientes se conservan y vuelven a validarse en el servidor.
+La aplicación nunca ajusta silenciosamente un precio ni un cupo para forzar un envío.
+
+CIERRE DE LA APP Y SEGURIDAD
+Si se cierra o recarga la app, los pendientes permanecen cifrados. Se recuperan y
+se sincronizan al ingresar de nuevo con el mismo usuario y contraseña CON CONEXION.
+Esta versión no permite iniciar una nueva sesión ni retomar la carga operativa
+tras recargar estando sin internet; mantené la aplicación abierta durante el corte.
+El modo de consulta con PIN de 0.27 sigue siendo independiente y opcional.
+No guarda la contraseña ni las credenciales Basic. La contraseña permite abrir el
+respaldo cifrado al ingresar. Si cambiaste la contraseña y había respaldo, no borres
+los datos: será necesario recuperarlo con la contraseña anterior.
+No borrar datos del navegador ni usar modo incógnito para trabajar con pendientes.
+La copia no se comparte con otra PC, otro navegador ni otro origen (puerto/URL).
+Las operaciones de versiones anteriores conservan su pantalla de recuperación;
+resolverlas y volver a ingresar para activar el modo automático.
+
+PRUEBA LOCAL CON DATOS DE ENSAYO
+1. Backend y preview iniciados; entrar y seleccionar jornada abierta con stock.
+2. Entrar en Clientes del reparto y elegir un cliente. Anotar saldo y stock.
+3. Detener SOLO el backend. Dejar la página y preview abiertos.
+4. Registrar una entrega. Tras el fallo de conexión debe quedar pendiente.
+5. Registrar una segunda entrega y un cobro. No deben permitirse entregas
+   superiores al stock local restante ni reutilizar cupos ya consumidos.
+6. Intentar cerrar la jornada: debe bloquearse.
+7. Reiniciar el backend. Sin pulsar sincronizar, esperar hasta 60 segundos
+   después de que esté disponible. Si hay borrador abierto, terminarlo/cancelarlo.
+8. Debe pasar a Al día. Comparar saldo, stock y caja con las operaciones registradas.
+9. Consultar historial y comprobar que cada operación aparece una sola vez.
+10. Para probar persistencia, repetir con una operación pendiente, cerrar la app,
+    reiniciar backend y volver a ingresar: debe recuperar y enviar la misma operación.
+
+El botón Sincronizar ahora permite adelantar un reintento; no es necesario normalmente.
+Las pruebas generan movimientos reales en tu base de ensayo; no repetirlos con UUID nuevos
+para recuperar una respuesta perdida. La aplicación se encarga de conservarlos.
+
+CELULAR
+Requiere HTTPS para el respaldo automático y la PWA. Primero validar esta prueba
+local; la configuración de HTTPS y acceso desde la red local es el siguiente paso.
+
+VALIDACION
+Compilación y 125 pruebas automatizadas aprobadas, incluyendo cola offline,
+stock/cupo/saldos locales, reintentos, respuestas perdidas, conflictos, persistencia,
+autenticación, cifrado, falta de espacio y bloqueo de cierre desde la interfaz.
+Pruebas de interfaz con API simulada; falta validar este flujo con tu backend real.
+
+Git:
+git add .
+git commit -m "feat: respaldo y sincronizacion automatica del reparto"
+
+
+--- Versiones anteriores ---
+
 AGUA 0.27 — Consulta de jornada sin conexión
 
 ALCANCE
