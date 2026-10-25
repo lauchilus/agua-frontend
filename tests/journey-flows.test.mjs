@@ -208,7 +208,7 @@ async function setup({
     await wait();
   }
   async function confirm(kind) {
-    click(kind === "OPEN" ? "Abrir jornada" : kind === "CLOSE" ? "Cerrar jornada" : kind === "EXPENSE" ? "Registrar gasto" : "Cargar / recargar stock");
+    click(kind === "OPEN" ? "Iniciar reparto" : kind === "CLOSE" ? "Finalizar reparto" : kind === "EXPENSE" ? "Registrar gasto" : "Cargar camioneta");
     await wait();
     if (kind === "EXPENSE") {
       const cat=w.document.querySelector('[aria-label="Categoría del gasto"]');cat.value="cat";cat.dispatchEvent(new w.Event("change",{bubbles:true}));
@@ -317,7 +317,7 @@ test("no prepara apertura si existe una entrega pendiente", async () => {
   const x = await setup();
   try {
     x.w.localStorage.setItem("agua.pending.v1.admin", '{"pending":true}');
-    x.click("Abrir jornada");
+    x.click("Iniciar reparto");
     await wait();
     assert.match(x.text(), /Primero resolvé la entrega o el cobro pendiente/);
     assert.equal(x.bodies.length, 0);
@@ -337,7 +337,7 @@ test("cierre perdido reintenta mismo cuerpo, devuelve máquinas y bloquea nuevos
   assert.equal(x.bodies[0],x.bodies[1]); assert.equal(x.ledger.size,1);
   assert.equal(x.w.localStorage.getItem(x.key),null);
   assert.match(x.text(),/Jornada cerrada/);
-  assert.ok(![...x.w.document.querySelectorAll("button")].some(b=>b.textContent === "Cerrar jornada"));
+  assert.ok(![...x.w.document.querySelectorAll("button")].some(b=>b.textContent === "Finalizar reparto"));
  } finally {x.dom.window.close();}
 });
 test("cierre confirmado con refresco fallido solo vuelve a consultar", async () => {
@@ -345,7 +345,7 @@ test("cierre confirmado con refresco fallido solo vuelve a consultar", async () 
  try {await x.confirm("CLOSE"); assert.equal(JSON.parse(x.w.localStorage.getItem(x.key)).status,"confirmed"); x.allowRefresh(); x.click("Actualizar jornada confirmada"); await wait(); await wait(); assert.equal(x.bodies.length,1); assert.equal(x.w.localStorage.getItem(x.key),null); } finally {x.dom.window.close();}
 });
 
-test("carga oculta insumos y conserva copas y máquinas",async()=>{const x=await setup({active:true});try{x.click("Cargar / recargar stock");await wait();const labels=[...x.w.document.querySelectorAll(".load-row")].map(x=>x.textContent).join(" ");assert.match(labels,/Copa/);assert.match(labels,/Máquina/);assert.match(labels,/Bidón/);assert.doesNotMatch(labels,/Bolsa/);}finally{x.dom.window.close();}});
+test("carga oculta insumos y conserva copas y máquinas",async()=>{const x=await setup({active:true});try{x.click("Cargar camioneta");await wait();const labels=[...x.w.document.querySelectorAll(".load-row")].map(x=>x.textContent).join(" ");assert.match(labels,/Copa/);assert.match(labels,/Máquina/);assert.match(labels,/Bidón/);assert.doesNotMatch(labels,/Bolsa/);}finally{x.dom.window.close();}});
 
 test("gasto perdido se reintenta una vez con mismo UUID y caja correcta",async()=>{const x=await setup({active:true,lost:true});try{await x.confirm("EXPENSE");assert.equal(x.spent.EFECTIVO,2000);x.click("Reintentar solicitud de jornada");await wait();await wait();assert.equal(x.bodies[0],x.bodies[1]);assert.equal(x.spent.EFECTIVO,2000);assert.equal(x.w.localStorage.getItem(x.key),null);assert.match(x.text(),/Gasto registrado/);assert.match(x.text(),/22[.]000/);}finally{x.dom.window.close();}});
 test("transferencia y Mercado Pago conservan efectivo esperado",async()=>{for(const medio of ["TRANSFERENCIA","MERCADO_PAGO"]){const x=await setup({active:true,expenseMedium:medio});try{await x.confirm("EXPENSE");assert.equal(x.spent[medio],2000);assert.equal(x.spent.EFECTIVO,0);assert.match(x.text(),/24[.]000/);}finally{x.dom.window.close();}}});

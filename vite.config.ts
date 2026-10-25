@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
   return {
     define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL("./package.json",import.meta.url),"utf8")).version) },
     plugins: [preact()],
-    server: { port: 5173, strictPort: true, proxy },
-    preview: { port: 4173, strictPort: true, proxy, https, host: mode === "lan" ? "0.0.0.0" : "127.0.0.1" },
+    server: { port: 5174, strictPort: true, proxy },
+    preview: { port: 4174, strictPort: true, proxy, https, host: mode === "lan" ? "0.0.0.0" : "127.0.0.1" },
   };
 });

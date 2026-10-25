@@ -253,7 +253,7 @@ test("sin conexión registra dos entregas, bloquea cierre y sincroniza al volver
   a.connection(false);await a.reviewDelivery();
   assert.match(a.text(),/1 pendientes/);assert.equal(a.bodies.length,0);
   await a.reviewDelivery();assert.match(a.text(),/2 pendientes/);
-  a.click('Cerrar jornada');await wait();assert.match(a.text(),/Primero resolvé la entrega o el cobro pendiente/);
+  a.click('Finalizar reparto');await wait();assert.match(a.text(),/Primero resolvé la entrega o el cobro pendiente/);
   a.connection(true);await until(()=>a.bodies.length===2&&a.w.document.querySelector('.auto-operations h2').textContent==='Al día');
   assert.equal(a.snap.stockJornada[0].cantidad,1);assert.equal(a.snap.clientes[0].saldo,10000);
   assert.notEqual(JSON.parse(a.bodies[0]).operaciones[0].entrega.operacionId,JSON.parse(a.bodies[1]).operaciones[0].entrega.operacionId);

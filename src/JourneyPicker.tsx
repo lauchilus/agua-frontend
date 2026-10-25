@@ -59,8 +59,8 @@ export function JourneyPicker({ user, disabled, currentId, onSelect }: Props) {
       <div class="section-heading">
         <h2>
           {user.roles.includes("ROLE_ADMIN")
-            ? "Jornadas de reparto"
-            : "Mis jornadas"}
+            ? "Repartos del día"
+            : "Mis repartos"}
         </h2>
         <button
           class="secondary"

@@ -321,7 +321,7 @@ export function JourneyActions({
               disabled={busy}
               onClick={() => void prepare("OPEN")}
             >
-              Abrir jornada
+              Iniciar reparto
             </button>
             {data?.jornada.estado === "ABIERTA" && <button class="secondary" disabled={busy} onClick={()=>void prepare("EXPENSE")}>Registrar gasto</button>}
             {data?.jornada.estado === "ABIERTA" && (
@@ -330,7 +330,7 @@ export function JourneyActions({
                 disabled={busy}
                 onClick={() => void prepare("CLOSE")}
               >
-                Cerrar jornada
+                Finalizar reparto
               </button>
             )}
             {data?.jornada.estado === "ABIERTA" && (
@@ -339,7 +339,7 @@ export function JourneyActions({
                 disabled={busy}
                 onClick={() => void prepare("LOAD")}
               >
-                Cargar / recargar stock
+                Cargar camioneta
               </button>
             )}
           </div>

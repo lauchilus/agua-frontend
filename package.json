@@ -1,6 +1,6 @@
 {
-  "name": "agua-frontend",
-  "version": "0.30.0",
+  "name": "agua-de-los-santos-ui",
+  "version": "0.30.0-ui.1",
   "private": true,
   "type": "module",
   "engines": {

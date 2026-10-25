@@ -1,3 +1,5 @@
+import {Sidebar,ViewTabs,Start,pages} from "./Navigation";
+import logo from "./assets/logo-santos.png";
 import {ClientImport} from "./ClientImport";
 import {requireCurrentShell} from "./pwa-version";
 import {AutoOperations} from "./AutoOperations";
@@ -17,6 +19,7 @@ import { useEffect, useState } from "preact/hooks";
 import { cash, clearAuth, download, login, sendOperation } from "./api";
 import type { Caja, Cliente, Snapshot, User } from "./types";
 import "./style.css";
+import "./santos.css";
 import { JourneyPicker } from "./JourneyPicker";
 import { Operations } from "./Operations";
 import { ExpenseList } from "./ExpenseList";
@@ -42,6 +45,8 @@ const stamp = (s: string) =>
 function App() {
   const [engine,setEngine]=useState<SyncEngine|null>(null);
   const [area,setArea]=useState("reparto");
+  const [menuOpen,setMenuOpen]=useState(false),[reportView,setReportView]=useState("resumen"),[adminView,setAdminView]=useState("equipo"),[expenseView,setExpenseView]=useState("generales");
+  function navigate(value:string){setArea(value);setMenuOpen(false);window.scrollTo?.({top:0,behavior:"smooth"});}
   const [journeyRevision, setJourneyRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null),
     [username, setUsername] = useState(""),
@@ -54,6 +59,7 @@ function App() {
     [tab, setTab] = useState("jornada"),
     [search, setSearch] = useState(""),
     [selected, setSelected] = useState<Cliente | null>(null);
+  useEffect(()=>{if(selected)document.getElementById("client-work")?.scrollIntoView?.({block:"start",behavior:"smooth"});},[selected?.id]);
   useEffect(()=>{
     if(!engine)return;
     return engine.subscribe(()=>{
@@ -64,6 +70,7 @@ function App() {
       } catch { setError("Hay operaciones que dependen del rechazo. Revisá la cola antes de continuar."); }
     });
   },[engine]);
+  useEffect(()=>{if(!menuOpen)return;const close=(e:KeyboardEvent)=>{if(e.key==="Escape"){setMenuOpen(false);document.querySelector<HTMLButtonElement>(".menu-toggle")?.focus();}};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close);},[menuOpen]);
   async function signIn(e: Event) {
     e.preventDefault();
     if (busy) return;
@@ -85,7 +92,7 @@ function App() {
         } catch(e){release();throw e;}
       } else if(hasAutomaticPending(account.username)) throw Error("Este navegador necesita HTTPS y soporte de almacenamiento seguro para recuperar los pendientes automáticos.");
       setUser(account);
-      setArea("reparto");
+      setArea(account.roles.includes("ROLE_ADMIN")?"inicio":"reparto");
     } catch (e) {
       clearAuth();
       setError((e as Error).message);
@@ -164,14 +171,12 @@ function App() {
         .includes(search.toLocaleLowerCase()),
     ) ?? [];
   return (
-    <div class="app">
+    <div class={user?"app signed-in":"app signed-out"}>
+      <a class="skip-link" href="#main-content">Ir al contenido</a>
+      {user&&<Sidebar area={area} admin={user.roles.includes("ROLE_ADMIN")} busy={busy} open={menuOpen} navigate={navigate}/>}
+      {user&&menuOpen&&<button class="menu-backdrop" aria-label="Cerrar menú" onClick={()=>setMenuOpen(false)}/>}
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon">◉</span>
-          <div>
-            AGUA<small>GESTIÓN DE REPARTO</small>
-          </div>
-        </div>
+        {user?<div class="top-location"><button class="menu-toggle" aria-label={menuOpen?"Cerrar navegación":"Abrir navegación"} aria-expanded={menuOpen} aria-controls="sidebar" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><span>Agua de los Santos <span class="top-divider">/</span> <b>{area==='inicio'?'Inicio':pages[area].title}</b></span></div>:<div class="brand"><img src={logo} alt="Agua de los Santos"/><span>Agua de los Santos<small>GESTIÓN DE LA EMBOTELLADORA</small></span></div>}
         {user && (
           <div class="account">
             <span>
@@ -189,25 +194,8 @@ function App() {
         )}
       </header>
       {!user ? (
-        <main class="login-layout">
-          <section class="intro">
-            <span class="eyebrow">CADA ENTREGA, EN ORDEN</span>
-            <h1>
-              Tu jornada.
-              <br />
-              Todo a mano.
-            </h1>
-            <p>
-              Clientes, abonos y stock en una sola pantalla. Simple, estés donde
-              estés.
-            </p>
-            <div class="intro-note">
-              <span>01</span> Entrá con tu usuario de reparto
-            </div>
-            <div class="intro-note">
-              <span>02</span> Consultá tu jornada y tus clientes
-            </div>
-          </section>
+        <main id="main-content" class="login-layout">
+          <section class="intro"><img class="login-logo" src={logo} alt="Agua de los Santos"/><span class="eyebrow">DE NUESTRA FÁBRICA A CADA CLIENTE</span><h1>Tu reparto.<br/>Más simple.</h1><p>Clientes, entregas y cuentas, organizados para acompañarte durante todo el día.</p><div class="intro-note">Una misma herramienta para la fábrica y el reparto.</div></section>
           <form class="panel login" onSubmit={signIn}>
             <span class="eyebrow">BIENVENIDO</span>
             <h2>Ingresá a tu cuenta</h2>
@@ -248,39 +236,39 @@ function App() {
           <OfflineReader/>
         </main>
       ) : (
-        <main class="workspace">
+        <main id="main-content" class="workspace">
           <div class="page-heading">
             <div>
-              <span class="eyebrow">AGUA · GESTIÓN</span>
-              <h1>
-                {area==="reparto"?(data ? "Tu jornada de reparto" : "Comencemos la jornada"):({clientes:"Gestión de clientes",reportes:"Reportes del negocio",gastos:"Gastos del negocio",admin:"Administración"})[area]}
-              </h1>
+              <span class="eyebrow">{user.roles.includes("ROLE_ADMIN")?"PANEL DE ADMINISTRACIÓN":"PANEL DE REPARTO"}</span><h1>{pages[area].title}</h1><p class="page-description">{pages[area].description}</p>
             </div>
-            <span class="pill">{engine?"Respaldo automático activo":"Operaciones con conexión"}</span>
+            <button class={"pill sync-pill "+(engine?.pending?"pending":"")} disabled={busy} onClick={()=>navigate("reparto")}>{engine?.pending?"Operaciones pendientes · Revisar":engine?"Respaldo automático activo":"Operaciones con conexión"}</button>
           </div>
-          <nav class="main-nav" aria-label="Navegación principal">
-            {[["reparto","Reparto"],["clientes","Clientes"],...(user.roles.includes("ROLE_ADMIN")?[["reportes","Reportes"],["gastos","Gastos"],["admin","Administración"]]:[])].map(([value,label])=><button key={value} class={area===value?"active":""} aria-current={area===value?"page":undefined} disabled={busy} onClick={()=>setArea(value)}>{label}</button>)}
-          </nav>
+          <div class="area-content" hidden={area!=="inicio"} data-area="inicio">{user.roles.includes("ROLE_ADMIN")&&<Start username={user.username} busy={busy} navigate={navigate}/>}</div>
           <div class="area-content" hidden={area!=="reportes"} data-area="reportes">
-          {user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <SalesReport key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <ContainersReport key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <AccountsReport key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <ClosingReport key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <JourneyHistory key={user.username} busy={busy} setWorking={setBusy}/>}
+          <ViewTabs value={reportView} onChange={setReportView} busy={busy} label="Tipo de reporte" items={[["resumen","Resumen general"],["ventas","Ventas"],["cuentas","Deudas y saldos"],["envases","Bidones y máquinas"],["cierres","Cierres de caja"],["historial","Historial de repartos"]]}/>
+          <div hidden={reportView!=="resumen"}>{user.roles.includes("ROLE_ADMIN") && <AdminDashboard key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={reportView!=="ventas"}>{user.roles.includes("ROLE_ADMIN") && <SalesReport key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={reportView!=="envases"}>{user.roles.includes("ROLE_ADMIN") && <ContainersReport key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={reportView!=="cuentas"}>{user.roles.includes("ROLE_ADMIN") && <AccountsReport key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={reportView!=="cierres"}>{user.roles.includes("ROLE_ADMIN") && <ClosingReport key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={reportView!=="historial"}>{user.roles.includes("ROLE_ADMIN") && <JourneyHistory key={user.username} busy={busy} setWorking={setBusy}/>}</div>
           </div>
           <div class="area-content" hidden={area!=="clientes"} data-area="clientes">
           <ClientManager admin={user.roles.includes("ROLE_ADMIN")} key={user.username} username={user.username} busy={busy} setWorking={setBusy} refresh={refreshAfterOperation}/>
           </div>
           <div class="area-content" hidden={area!=="gastos"} data-area="gastos">
-          {user.roles.includes("ROLE_ADMIN") && <GeneralExpenses key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
+          <ViewTabs value={expenseView} onChange={setExpenseView} busy={busy} label="Gestión de gastos" items={[["generales","Gastos generales"],["categorias","Categorías"]]}/><p class="muted">Los gastos de una camioneta se registran dentro de su reparto.</p>
+          <div hidden={expenseView!=="generales"}>{user.roles.includes("ROLE_ADMIN") && <GeneralExpenses key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={expenseView!=="categorias"}>{user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}</div>
           </div>
           <div class="area-content" hidden={area!=="admin"} data-area="admin">
-          {user.roles.includes("ROLE_ADMIN") && <ClientImport key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
-          {user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
+          <ViewTabs value={adminView} onChange={setAdminView} busy={busy} label="Configuración del negocio" items={[["equipo","Camionetas y repartidores"],["precios","Precios de venta"],["planes","Planes de abono"],["importar","Importar clientes"]]}/>
+          <div hidden={adminView!=="importar"}>{user.roles.includes("ROLE_ADMIN") && <ClientImport key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={adminView!=="equipo"}>{user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={adminView!=="precios"}>{user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          <div hidden={adminView!=="planes"}>{user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}</div>
+          </div>
+          <div class="area-content" hidden={area!=="fabrica"} data-area="fabrica">
           {user.roles.includes("ROLE_ADMIN") && (
             <Factory
               key={user.username}
@@ -291,7 +279,16 @@ function App() {
           )}
           </div>
           <div class="area-content" hidden={area!=="reparto"} data-area="reparto">
-          {!engine?.pending && data?.jornada.estado==="ABIERTA" && <PrepareOffline username={user.username} jornadaId={data.jornada.id} busy={busy} setWorking={setBusy}/>}
+          {!engine?.pending && data?.jornada.estado==="ABIERTA" && <details class="offline-tools"><summary>Consulta sin conexión con PIN</summary><PrepareOffline username={user.username} jornadaId={data.jornada.id} busy={busy} setWorking={setBusy}/></details>}
+          <details class="reparto-selector" open={!data}><summary>{data?"Reparto del "+date(data.jornada.fecha)+" · Cambiar selección":"Seleccionar reparto"}</summary>
+          <JourneyPicker
+            key={user.username + journeyRevision}
+            user={user}
+            disabled={busy||!!engine?.pending}
+            currentId={id}
+            onSelect={load}
+          />
+          </details>
           <JourneyActions
             key={user.username}
             user={user}
@@ -300,49 +297,23 @@ function App() {
             setWorking={setBusy}
             onComplete={completeJourney}
           />
-          <JourneyPicker
-            key={user.username + journeyRevision}
-            user={user}
-            disabled={busy||!!engine?.pending}
-            currentId={id}
-            onSelect={load}
-          />
           {data && (
             <button
               class="secondary"
               disabled={busy||!!engine?.pending}
               onClick={() => void load(id)}
             >
-              {busy ? "Consultando…" : "Actualizar jornada seleccionada"}
+              {busy ? "Consultando…" : "Actualizar reparto"}
             </button>
           )}
-          {engine ? <AutoOperations engine={engine} data={data} client={selected} externalBusy={busy}/> : <Operations
-            key={user.username}
-            username={user.username}
-            data={data}
-            client={selected}
-            refresh={refreshAfterOperation}
-            setWorking={setBusy}
-            externalBusy={busy}
-          />}
-          {!engine&&<p class="muted">Para el respaldo automático usá localhost o HTTPS en un navegador actualizado. Si hay una solicitud de una versión anterior, resolvela y volvé a ingresar.</p>}
           {error && (
             <p class="error" role="alert">
               {error}
               {data && " Seguís viendo la última consulta exitosa."}
             </p>
           )}
-          {!data ? (
-            <div class="panel empty">
-              <h2>Elegí una jornada para empezar</h2>
-              <p>Podés consultar una jornada abierta o revisar una cerrada.</p>
-              <p class="muted">
-                Elegí una jornada de la lista. Si no hay abiertas, podés
-                consultar las cerradas.
-              </p>
-            </div>
-          ) : (
-            <>
+{data&&<>
+              <div class="reparto-shortcut" hidden={!!selected||data.jornada.estado!=="ABIERTA"}><button class="primary" disabled={busy} onClick={()=>{setTab("clientes");setSelected(null);}}>Registrar entrega o cobro →</button><span>Elegí el cliente para continuar.</span></div>
               <div class="context">
                 <span>
                   <b>{date(data.jornada.fecha)}</b> ·{" "}
@@ -373,6 +344,31 @@ function App() {
                   </button>
                 ))}
               </nav>
+
+</>}
+<div id="client-work" hidden={!!engine&&!selected&&!engine.pending}>
+          {engine ? <AutoOperations engine={engine} data={data} client={selected} externalBusy={busy}/> : <Operations
+            key={user.username}
+            username={user.username}
+            data={data}
+            client={selected}
+            refresh={refreshAfterOperation}
+            setWorking={setBusy}
+            externalBusy={busy}
+          />}
+          {!engine&&<p class="muted">Para el respaldo automático usá localhost o HTTPS en un navegador actualizado. Si hay una solicitud de una versión anterior, resolvela y volvé a ingresar.</p>}
+
+</div>          {!data ? (
+            <div class="panel empty">
+              <h2>Elegí un reparto para empezar</h2>
+              <p>Podés consultar una jornada abierta o revisar una cerrada.</p>
+              <p class="muted">
+                Elegí una jornada de la lista. Si no hay abiertas, podés
+                consultar las cerradas.
+              </p>
+            </div>
+          ) : (
+            <>
               {tab === "jornada" && (
                 <>
                   <div class="stats">
@@ -391,7 +387,7 @@ function App() {
                     <article class="stat">
                       <span>Total gastado</span>
                       <strong>{money(caja!.totalGastado)}</strong>
-                      <small>Gastos de esta jornada</small>
+                      <small>Gastos de este reparto</small>
                     </article>
                   </div>
                   <div class="two-col">
@@ -439,8 +435,7 @@ function App() {
                   </div>
                   <ExpenseList key={data.jornada.id+data.generadoEn} id={data.jornada.id}/>
                   <p class="notice">
-                    Para registrar entregas o cobros, elegí un cliente. El
-                    trabajo sin conexión todavía no está habilitado.
+                    Para registrar entregas o cobros, elegí un cliente. Las operaciones quedan guardadas y se sincronizan al recuperar la conexión.
                   </p>
                 </>
               )}
@@ -463,7 +458,7 @@ function App() {
                   )}
                   {data.jornada.estado === "CERRADA" && (
                     <p class="notice">
-                      Jornada cerrada: el stock restante ya fue devuelto a
+                      Reparto finalizado: el stock restante ya fue devuelto a
                       fábrica.
                     </p>
                   )}
@@ -634,7 +629,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.30</span>
+        Agua de los Santos · Gestión <span>Interfaz alternativa · 0.30 UI.1</span>
       </footer>
     </div>
   );
