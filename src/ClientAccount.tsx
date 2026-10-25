@@ -7,7 +7,7 @@ import {money} from './operations-model';
 function today(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=(key:string)=>parts.find(p=>p.type===key)!.value;return part('year')+'-'+part('month')+'-'+part('day');}
 const dateTime=(value:string)=>new Intl.DateTimeFormat('es-AR',{timeZone:'America/Argentina/Buenos_Aires',dateStyle:'short',timeStyle:'short',hourCycle:'h23'}).format(new Date(value));
 const balance=(value:number)=>value>0?'Deuda: '+money(value):value<0?'A favor: '+money(-value):'Cuenta saldada';
-const labels:Record<string,string>={ENTREGA:'Entrega',ENTREGA_CON_ABONO:'Entrega con abono',DEVOLUCION:'Devolución',COBRO:'Cobro'};
+const labels:Record<string,string>={SALDO_INICIAL:'Saldo inicial importado',ENTREGA:'Entrega',ENTREGA_CON_ABONO:'Entrega con abono',DEVOLUCION:'Devolución',COBRO:'Cobro'};
 export function ClientAccount({client,busy,setWorking,onClose}:{client:ClientRecord;busy:boolean;setWorking:(b:boolean)=>void;onClose:()=>void}){
  const [from,setFrom]=useState(()=>today().slice(0,8)+'01'),[to,setTo]=useState(today),[data,setData]=useState<{situation:ClientSituation;machines:ClientHolding[];history:ClientHistory}|null>(null),[error,setError]=useState('');
  const running=useRef(false);

@@ -1,3 +1,4 @@
+import {ClientImport} from "./ClientImport";
 import {requireCurrentShell} from "./pwa-version";
 import {AutoOperations} from "./AutoOperations";
 import {SyncEngine,claimSession} from "./sync-engine";
@@ -276,6 +277,7 @@ function App() {
           {user.roles.includes("ROLE_ADMIN") && <CategoryAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           </div>
           <div class="area-content" hidden={area!=="admin"} data-area="admin">
+          {user.roles.includes("ROLE_ADMIN") && <ClientImport key={user.username} username={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <FleetAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PriceAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
           {user.roles.includes("ROLE_ADMIN") && <PlanAdmin key={user.username} busy={busy} setWorking={setBusy}/>}
@@ -632,7 +634,7 @@ function App() {
         </main>
       )}
       <footer>
-        AGUA · Reparto y administración <span>Versión 0.29</span>
+        AGUA · Reparto y administración <span>Versión 0.30</span>
       </footer>
     </div>
   );

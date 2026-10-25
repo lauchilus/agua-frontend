@@ -249,3 +249,7 @@ export const salesReport=(desde:string,hasta:string,productoId:string)=>{
 };
 
 export const closingReport=(desde:string,hasta:string,fechaPor:string)=>get<import('./ClosingReport').ClosingSummary>(`/admin/jornadas/resumen?${new URLSearchParams({desde,hasta,fechaPor})}`);
+
+export const prepareClientImport=(archivoBase64:string,fechaCorte:string)=>postJourney<import('./ClientImport').ImportView>('/admin/importaciones/clientes/previa',{archivoBase64,fechaCorte});
+export const confirmClientImport=(id:string)=>postJourney<import('./ClientImport').ImportView>(`/admin/importaciones/clientes/${encodeURIComponent(id)}/confirmar`,{});
+export const getClientImport=(id:string)=>get<import('./ClientImport').ImportView>(`/admin/importaciones/clientes/${encodeURIComponent(id)}`);

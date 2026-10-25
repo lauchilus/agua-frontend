@@ -1,3 +1,7 @@
+# Novedad 0.30: importación inicial desde Excel
+
+Administración > Importar Excel. Instalá primero el parche de backend y la migración V17. Consultá LEEME-IMPORTADOR.md incluido en la entrega.
+
 # Novedad 0.29: prueba por HTTPS desde celular u otra PC
 
 Seguí **PRUEBA-LAN.md**. Incluye preparación de certificados, firewall, arranque y prueba de sincronización automática.
