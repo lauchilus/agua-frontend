@@ -629,7 +629,7 @@ function App() {
         </main>
       )}
       <footer>
-        Agua de los Santos · Gestión <span>Interfaz alternativa · 0.30 UI.1</span>
+        Agua de los Santos · Gestión - by Lautaro Falfan <span>Interfaz alternativa · 0.30 UI.1</span>
       </footer>
     </div>
   );
