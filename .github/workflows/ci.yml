@@ -1,0 +1,45 @@
+name: Verificar y publicar frontend
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+# Serializa publicaciones. Un commit antiguo se descarta si main ya avanzo.
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verificar:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Verificar publicador
+        run: python3 -m unittest discover -s scripts -p 'test_publish_frontend.py' -v
+  publicar:
+    name: Actualizar version integrada
+    needs: verificar
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Actualizar frontend.ref en el backend
+        env:
+          BACKEND_SYNC_TOKEN: ${{ secrets.BACKEND_SYNC_TOKEN }}
+          FRONTEND_READ_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish_frontend.py
