@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 const dir=new URL('../dist/',import.meta.url);
 const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 const assets=(await readdir(new URL('assets/',dir))).map(n=>'/assets/'+n);
-const urls=['/','/index.html','/manifest.webmanifest','/icon-192.png','/icon-512.png',...assets];
+const urls=['/','/index.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/santos-icon.svg','/santos-logo.png',...assets];
 const hash=createHash('sha256');for(const u of urls)hash.update(await readFile(new URL(u==='/'?'index.html':u.slice(1),dir)));
 const cache='agua-shell-'+hash.digest('hex').slice(0,16);
 await writeFile(new URL('sw.js',dir),`const CACHE=${JSON.stringify(cache)}, URLS=${JSON.stringify(urls)};
